@@ -154,32 +154,30 @@ async function registerCommands(client) {
 async function handleInteraction(interaction) {
     if (!interaction.isChatInputCommand()) return;
     
-    // Acknowledge the interaction immediately to prevent timeout
+    // Always defer the reply immediately to prevent timeouts
     await interaction.deferReply();
     
     const { commandName, options } = interaction;
     
     // Check permissions for sticky commands
     if (commandName === 'sticky' && !interaction.member.permissions.has("ManageChannels")) {
-        return interaction.reply({
+        return interaction.editReply({
             embeds: [{
                 title: "Insufficient Privileges!",
                 description: "You need the 'Manage Channels' permission.",
                 color: Colors["error"]
-            }],
-            ephemeral: true
+            }]
         });
     }
     
     // Check permissions for boost commands
     if (commandName === 'boost' && !interaction.member.permissions.has("Administrator")) {
-        return interaction.reply({
+        return interaction.editReply({
             embeds: [{
                 title: "Insufficient Privileges!",
                 description: "You need the 'Administrator' permission to manage boost roles.",
                 color: Colors["error"]
-            }],
-            ephemeral: true
+            }]
         });
     }
     
@@ -326,19 +324,18 @@ async function handleInteraction(interaction) {
                     const roleIds = roleIdsStr.split(/\s+/);
                     
                     if (roleIds.length === 0) {
-                        return interaction.reply({
+                        return interaction.editReply({
                             embeds: [{
                                 title: "Missing Role IDs",
                                 description: "Please provide at least one role ID to set as a boost role.",
                                 color: Colors["error"]
-                            }],
-                            ephemeral: true
+                            }]
                         });
                     }
                     
                     global.boostManager.setBoostRoles(interaction.guild.id, roleIds);
                     
-                    interaction.reply({
+                    interaction.editReply({
                         embeds: [{
                             title: "Boost Roles Set",
                             description: `Successfully set ${roleIds.length} role(s) to be removed when users stop boosting.`,
@@ -352,7 +349,7 @@ async function handleInteraction(interaction) {
                     const configuredRoles = global.boostManager.getBoostRoles(interaction.guild.id);
                     
                     if (configuredRoles.length === 0) {
-                        return interaction.reply({
+                        return interaction.editReply({
                             embeds: [{
                                 title: "No Boost Roles",
                                 description: "No roles are currently configured to be removed when users stop boosting.",
@@ -367,7 +364,7 @@ async function handleInteraction(interaction) {
                         roleList += `• ${role ? role.name : "Unknown Role"} (${roleId})\n`;
                     });
                     
-                    interaction.reply({
+                    interaction.editReply({
                         embeds: [{
                             title: "Configured Boost Roles",
                             description: `The following roles will be removed when users stop boosting:\n\n${roleList}`,
@@ -380,7 +377,7 @@ async function handleInteraction(interaction) {
                 case 'clearroles': {
                     global.boostManager.removeBoostRoles(interaction.guild.id);
                     
-                    interaction.reply({
+                    interaction.editReply({
                         embeds: [{
                             title: "Boost Roles Cleared",
                             description: "Successfully cleared all roles from boost management.",
@@ -394,25 +391,16 @@ async function handleInteraction(interaction) {
     } catch (error) {
         console.error(error);
         
-        // If the interaction hasn't been replied to yet, send an error message
-        if (!interaction.replied && !interaction.deferred) {
-            interaction.reply({
-                embeds: [{
-                    title: "Error",
-                    description: "An error occurred while processing your command.",
-                    color: Colors["error"]
-                }],
-                ephemeral: true
-            });
-        } else if (interaction.deferred) {
-            interaction.editReply({
-                embeds: [{
-                    title: "Error",
-                    description: "An error occurred while processing your command.",
-                    color: Colors["error"]
-                }]
-            });
-        }
+        // If there was an error, send an error message
+        interaction.editReply({
+            embeds: [{
+                title: "Error",
+                description: "An error occurred while processing your command.",
+                color: Colors["error"]
+            }]
+        }).catch(err => {
+            console.error("Failed to send error message:", err);
+        });
     }
 }
 
