@@ -25,6 +25,9 @@ const client = new Client({
 const {Stickies} = require("./sticky.js");
 global.stickies = new Stickies();
 
+const {BoostManager} = require("./boost_manager.js");
+global.boostManager = new BoostManager();
+
 client.on("ready", () => {  
     global.discordApplication = client.application;
     global.stickies.LoadStickies(client.guilds, () => {
@@ -74,6 +77,21 @@ client.on("guildDelete", guild => {
     global.stickies.RemoveServerStickies(guild.id, () => {
         console.log("Removed stickies from server: ", guild.id);
     });
+    
+    // Also remove any boost role configurations for this server
+    global.boostManager.removeBoostRoles(guild.id);
+});
+
+// Listen for GuildMemberUpdate events to detect when a member stops boosting
+client.on("guildMemberUpdate", (oldMember, newMember) => {
+    // Check if the member was boosting before but isn't now
+    const wasBooster = oldMember.premiumSince !== null;
+    const isBooster = newMember.premiumSince !== null;
+    
+    if (wasBooster && !isBooster) {
+        // Member stopped boosting
+        global.boostManager.handleBoostRemoved(newMember);
+    }
 });
 
 client.on("messageCreate", msg => {
@@ -166,6 +184,54 @@ client.on("messageCreate", msg => {
                 });
         }
     }  
+    else if (msgParams[0] == "!boost")
+    {
+        // Require ADMINISTRATOR permission for boost management commands
+        if (!msg.member.permissions.has("ADMINISTRATOR"))
+        {
+            BotFunctions.SimpleMessage(msg.channel, "You need the 'Administrator' permission to manage boost roles.", "Insufficient Privileges!", Colors["error"]);
+            return; 
+        }
+
+        switch (msgParams[1]) 
+        {
+            case "setroles": // Set roles to remove when a user stops boosting
+                const roleIds = msgParams.slice(2);
+                if (roleIds.length === 0) {
+                    BotFunctions.SimpleMessage(msg.channel, "Please provide at least one role ID to set as a boost role.", "Missing Role IDs", Colors["error"]);
+                    return;
+                }
+                
+                global.boostManager.setBoostRoles(msg.guild.id, roleIds);
+                BotFunctions.SimpleMessage(msg.channel, `Successfully set ${roleIds.length} role(s) to be removed when users stop boosting.`, "Boost Roles Set", Colors["success"]);
+                break;
+                
+            case "listroles": // List roles that will be removed when a user stops boosting
+                const configuredRoles = global.boostManager.getBoostRoles(msg.guild.id);
+                
+                if (configuredRoles.length === 0) {
+                    BotFunctions.SimpleMessage(msg.channel, "No roles are currently configured to be removed when users stop boosting.", "No Boost Roles", Colors["info"]);
+                    return;
+                }
+                
+                let roleList = "";
+                configuredRoles.forEach(roleId => {
+                    const role = msg.guild.roles.cache.get(roleId);
+                    roleList += `• ${role ? role.name : "Unknown Role"} (${roleId})\n`;
+                });
+                
+                BotFunctions.SimpleMessage(msg.channel, `The following roles will be removed when users stop boosting:\n\n${roleList}`, "Configured Boost Roles", Colors["info"]);
+                break;
+                
+            case "clearroles": // Clear all roles from boost management
+                global.boostManager.removeBoostRoles(msg.guild.id);
+                BotFunctions.SimpleMessage(msg.channel, "Successfully cleared all roles from boost management.", "Boost Roles Cleared", Colors["success"]);
+                break;
+                
+            default:
+                BotFunctions.SimpleMessage(msg.channel, "Available commands:\n• !boost setroles <role_id1> <role_id2> ... - Set roles to remove when users stop boosting\n• !boost listroles - List configured boost roles\n• !boost clearroles - Clear all boost roles", "Boost Management Commands", Colors["info"]);
+        }
+    }
     else
     {
         BotFunctions.ShowChannelStickies(msg.guild.id, msg.channel, null);     
