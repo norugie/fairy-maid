@@ -53,6 +53,7 @@ async function handleFairyMaidMessage(client, message) {
 
   // Log for debugging
   if (mentioned || nameCalled) {
+    console.log("Author name:", message.author.username);
     console.log(`Fairy Maid triggered by: ${mentioned ? 'mention' : 'name call'}`);
   }
 
