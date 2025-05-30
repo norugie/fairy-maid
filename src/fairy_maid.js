@@ -22,6 +22,9 @@ const specialUsers = [
   'Patchouli Knowledge',
   'Hong Meiling',
   'Koakuma',
+  'Patchy',
+  'Remi',
+  'Flan',
   // Others
   'Head Maid~',
   '𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬',
@@ -66,12 +69,16 @@ async function handleFairyMaidMessage(client, message) {
     // Remove bot mention from prompt to clean up
     const cleanedInput = message.content.replace(/<@!?(\d+)>/, '').trim();
 
-    // Check if the message author's username matches any special users
-    const authorName = message.author.username;
+    // Check if the message author's username or display name matches any special users
+    const authorUsername = message.author.username;
+    const authorDisplayName = message.member?.displayName || authorUsername;
 
-    console.log("Author name:", authorName);
+    console.log("Author username:", authorUsername);
+    console.log("Author display name:", authorDisplayName);
 
-    const isSpecialUser = specialUsers.some(name => authorName.includes(name));
+    const isSpecialUser = specialUsers.some(name => 
+      authorUsername.includes(name) || authorDisplayName.includes(name)
+    );
 
     //     const systemPrompt = `You are a Scarlet Devil Mansion fairy maid. You are clumsy, shy, but playful and polite. You're energetic and a bit silly. You speak in short sentences and aren't too formal. You sometimes trip over words or make small mistakes. You use emojis and playful expressions. You're eager to help but might fumble a bit. 
 
