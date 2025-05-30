@@ -37,8 +37,8 @@ client.on("ready", () => {
     // Set the bot's status
     client.user.setPresence({
         activities: [{
-            name: "definitely not napping (probably) 😴",
-            type: ActivityType.Playing
+            name: "the Mansion; plotting mischief! :sparkles:",
+            type: ActivityType.Watching
         }],
         status: "online"
     });
