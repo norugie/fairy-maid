@@ -58,8 +58,10 @@ A bot that keeps important stuff at the bottom of channels and manages server bo
 - The bot needs the following permissions:
   - Read/Send Messages
   - Manage Messages
+  - Attach Files
+  - Embed Links
   - Manage Roles (for boost role management)
-  - View Channels
+  - View/Manage Channels
 
 ## Configuration
 
