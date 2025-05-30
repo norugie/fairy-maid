@@ -1,5 +1,5 @@
 const findConfig = require("find-config");
-require("dotenv").config({path: findConfig(".env")});
+require("dotenv").config({ path: findConfig(".env") });
 
 const BotFunctions = require("./bot_functions.js");
 const Colors = require("./messages/colors.js");
@@ -16,38 +16,43 @@ const ListCommand = require("./commands/list.js");
 // Import fairy maid functionality
 const { handleFairyMaidMessage } = require("./fairy_maid.js");
 
-const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
-const client = new Client({ 
+const { Client, GatewayIntentBits, EmbedBuilder, ActivityType } = require("discord.js");
+const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages, 
+        GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent
-    ] 
+    ]
 });
 
-const {Stickies} = require("./sticky.js");
+const { Stickies } = require("./sticky.js");
 global.stickies = new Stickies();
 
-const {BoostManager} = require("./boost_manager.js");
+const { BoostManager } = require("./boost_manager.js");
 global.boostManager = new BoostManager();
 
-client.on("ready", () => {  
+client.on("ready", () => {
     global.discordApplication = client.application;
+
+    // Set the bot's status
+    client.user.setPresence({
+        activities: [{
+            name: "definitely not napping (probably) 😴",
+            type: ActivityType.Playing
+        }],
+        status: "online"
+    });
+
+    console.log(`Logged in as ${client.user.tag}! Status set to "Playing dusting the mansion"`);
     global.stickies.LoadStickies(client.guilds, () => {
         // Delete all Sticky bot messages in the last 50 messages for every server's channels
-        for (const [server_id, server] of client.guilds.cache)
-        {
-            for (const [channel_id, channel] of server.channels.cache)
-            {
-                if (global.stickies.ValidStickyChannel(server_id, channel_id))
-                {
-                    try
-                    {
-                        channel.messages.fetch({limit: 50}).then(messages => {
-                            for (const [_, message] of messages)
-                            {
-                                if (message.author.bot && message.author.id == global.discordApplication.id)
-                                {
+        for (const [server_id, server] of client.guilds.cache) {
+            for (const [channel_id, channel] of server.channels.cache) {
+                if (global.stickies.ValidStickyChannel(server_id, channel_id)) {
+                    try {
+                        channel.messages.fetch({ limit: 50 }).then(messages => {
+                            for (const [_, message] of messages) {
+                                if (message.author.bot && message.author.id == global.discordApplication.id) {
                                     //// Only remove sticky messages (So commands stay visible)
                                     //if (message.embeds[0] == null)
                                     BotFunctions.DeleteMessage(message);
@@ -55,10 +60,9 @@ client.on("ready", () => {
                             }
                         }).then(() => {
                             BotFunctions.ShowChannelStickies(server_id, channel, null);
-                        });  
+                        });
                     }
-                    catch(error)
-                    {
+                    catch (error) {
                         console.error(error.message);
                     }
                 }
@@ -80,7 +84,7 @@ client.on("guildDelete", guild => {
     global.stickies.RemoveServerStickies(guild.id, () => {
         console.log("Removed stickies from server: ", guild.id);
     });
-    
+
     // Also remove any boost role configurations for this server
     global.boostManager.removeBoostRoles(guild.id);
 });
@@ -90,7 +94,7 @@ client.on("guildMemberUpdate", (oldMember, newMember) => {
     // Check if the member was boosting before but isn't now
     const wasBooster = oldMember.premiumSince !== null;
     const isBooster = newMember.premiumSince !== null;
-    
+
     if (wasBooster && !isBooster) {
         // Member stopped boosting
         global.boostManager.handleBoostRemoved(newMember);
@@ -103,47 +107,44 @@ client.on("messageCreate", async (msg) => {
     //        return;
     if (msg.author.bot && msg.author.id == global.discordApplication.id)
         return;
-    
+
     // Check if this is a fairy maid message and handle it
     const isFairyMaidMessage = await handleFairyMaidMessage(client, msg);
     if (isFairyMaidMessage) return; // Skip other processing if fairy maid handled the message
-    
+
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
-    
-    if (msgParams[0] == "!sticky")
-    {   
-        if (!msg.member.permissions.has("MANAGE_CHANNELS"))
-        {
+
+    if (msgParams[0] == "!sticky") {
+        if (!msg.member.permissions.has("MANAGE_CHANNELS")) {
             BotFunctions.SimpleMessage(msg.channel, "You need the 'Manage Channels' permission.", "Insufficient Privileges!", Colors["error"]);
-            return; 
+            return;
         }
 
-        switch (msgParams[1]) 
-        {
+        switch (msgParams[1]) {
             case "add": // Add a sticky
                 AddCommand.Run(client, msg);
-            break;
+                break;
             case "addfancy": // Add a fancy sticky
                 AddFancyCommand.Run(client, msg);
-            break;
+                break;
             case "edit": // Modify channel sticky
                 EditCommand.Run(client, msg);
-            break;
+                break;
             case "remove": // Remove a sticky
                 RemoveCommand.Run(client, msg);
-            break;
+                break;
             case "removeall":
                 RemoveAllCommand.Run(client, msg);
-            break;
+                break;
             case "preview":
                 PreviewCommand.Run(client, msg);
-            break;
+                break;
             case "previewfancy":
                 PreviewFancyCommand.Run(client, msg);
-            break;
+                break;
             case "list": // List stickies from channel or all channels with stickies
                 ListCommand.Run(client, msg);
-            break;
+                break;
             default:
                 msg.channel.send({
                     embeds: [{
@@ -190,58 +191,54 @@ client.on("messageCreate", async (msg) => {
                     }]
                 });
         }
-    }  
-    else if (msgParams[0] == "!boost")
-    {
+    }
+    else if (msgParams[0] == "!boost") {
         // Require ADMINISTRATOR permission for boost management commands
-        if (!msg.member.permissions.has("ADMINISTRATOR"))
-        {
+        if (!msg.member.permissions.has("ADMINISTRATOR")) {
             BotFunctions.SimpleMessage(msg.channel, "You need the 'Administrator' permission to manage boost roles.", "Insufficient Privileges!", Colors["error"]);
-            return; 
+            return;
         }
 
-        switch (msgParams[1]) 
-        {
+        switch (msgParams[1]) {
             case "setroles": // Set roles to remove when a user stops boosting
                 const roleIds = msgParams.slice(2);
                 if (roleIds.length === 0) {
                     BotFunctions.SimpleMessage(msg.channel, "Please provide at least one role ID to set as a boost role.", "Missing Role IDs", Colors["error"]);
                     return;
                 }
-                
+
                 global.boostManager.setBoostRoles(msg.guild.id, roleIds);
                 BotFunctions.SimpleMessage(msg.channel, `Successfully set ${roleIds.length} role(s) to be removed when users stop boosting.`, "Boost Roles Set", Colors["success"]);
                 break;
-                
+
             case "listroles": // List roles that will be removed when a user stops boosting
                 const configuredRoles = global.boostManager.getBoostRoles(msg.guild.id);
-                
+
                 if (configuredRoles.length === 0) {
                     BotFunctions.SimpleMessage(msg.channel, "No roles are currently configured to be removed when users stop boosting.", "No Boost Roles", Colors["info"]);
                     return;
                 }
-                
+
                 let roleList = "";
                 configuredRoles.forEach(roleId => {
                     const role = msg.guild.roles.cache.get(roleId);
                     roleList += `• ${role ? role.name : "Unknown Role"} (${roleId})\n`;
                 });
-                
+
                 BotFunctions.SimpleMessage(msg.channel, `The following roles will be removed when users stop boosting:\n\n${roleList}`, "Configured Boost Roles", Colors["info"]);
                 break;
-                
+
             case "clearroles": // Clear all roles from boost management
                 global.boostManager.removeBoostRoles(msg.guild.id);
                 BotFunctions.SimpleMessage(msg.channel, "Successfully cleared all roles from boost management.", "Boost Roles Cleared", Colors["success"]);
                 break;
-                
+
             default:
                 BotFunctions.SimpleMessage(msg.channel, "Available commands:\n• !boost setroles <role_id1> <role_id2> ... - Set roles to remove when users stop boosting\n• !boost listroles - List configured boost roles\n• !boost clearroles - Clear all boost roles", "Boost Management Commands", Colors["info"]);
         }
     }
-    else
-    {
-        BotFunctions.ShowChannelStickies(msg.guild.id, msg.channel, null);     
+    else {
+        BotFunctions.ShowChannelStickies(msg.guild.id, msg.channel, null);
     }
 });
 
