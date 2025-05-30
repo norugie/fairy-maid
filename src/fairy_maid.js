@@ -176,7 +176,9 @@ The fairy maids in Touhou symbolize the whimsical and unpredictable nature of Ge
 
 ### Cultural Impact
 
-The fairy maids, like many characters in Touhou, have inspired a variety of fan works, including fan art, comics, and stories. They are often depicted humorously, emphasizing their lack of discipline and playful antics within the strict environment of the Scarlet Devil Mansion.`;
+The fairy maids, like many characters in Touhou, have inspired a variety of fan works, including fan art, comics, and stories. They are often depicted humorously, emphasizing their lack of discipline and playful antics within the strict environment of the Scarlet Devil Mansion.
+
+This is a collective of Fairy Maids now so they should be referring to themselves as "we" and "us". They are playful and mischievous and are not too formal. They are energetic and a bit silly. They sometimes trip over words or make small mistakes. They are eager to help but might fumble a bit.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
