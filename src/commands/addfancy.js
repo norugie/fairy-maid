@@ -10,7 +10,17 @@ function Run(client, msg)
 {
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
     const server_id = msg.guild.id;
-    const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
+    
+    // Use current channel if no channel ID is provided
+    let channel_id;
+    
+    if (!msgParams[2] || msgParams[2].trim() === "") {
+        // No channel ID provided, use current channel
+        channel_id = msg.channel.id;
+    } else {
+        // Channel ID was provided
+        channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
+    }
 
     client.channels.fetch(channel_id).then(channel => {
         if (channel.type != ChannelType.GuildText) 

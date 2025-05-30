@@ -9,8 +9,20 @@ function Run(client, msg)
 {
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
     const server_id = msg.guild.id;
-    const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]); 
-    const originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "").replace(msgParams[2], "");
+    
+    // Use current channel if no channel ID is provided
+    let channel_id;
+    let originalMsg;
+    
+    if (!msgParams[2] || msgParams[2].trim() === "") {
+        // No channel ID provided, use current channel
+        channel_id = msg.channel.id;
+        originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "");
+    } else {
+        // Channel ID was provided
+        channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
+        originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "").replace(msgParams[2], "");
+    }
     
     // Check for attachments in the message
     let mediaUrl = null;
