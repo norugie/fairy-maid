@@ -23,9 +23,14 @@ const specialUsers = [
   'Hong Meiling',
   'Koakuma',
   // Others
-  'Head Maid',
-  'Krul Tepes',
-  '𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚'
+  'Head Maid~',
+  '𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬',
+  '𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚',
+  // Discord formatted usernames
+  '☾✟☽︱𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬 ๑❦๑',
+  '☾✟☽︱𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚 ๑❦๑',
+  '☾✟☽︱𝐇𝐞𝐚𝐝 𝐌𝐚𝐢𝐝 ๑❦๑',
+  '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 ๑❦๑'
 ];
 
 /**
@@ -39,13 +44,13 @@ async function handleFairyMaidMessage(client, message) {
 
   // Check for direct mentions of the bot
   const mentioned = message.mentions.has(client.user);
-  
+
   // Check for name mentions in the message content
   const contentLower = message.content.toLowerCase();
   const nameCalled = characterNameVariants.some((name) =>
     contentLower.includes(name.toLowerCase())
   );
-  
+
   // Log for debugging
   if (mentioned || nameCalled) {
     console.log(`Fairy Maid triggered by: ${mentioned ? 'mention' : 'name call'}`);
@@ -63,7 +68,7 @@ async function handleFairyMaidMessage(client, message) {
     // Check if the message author's username matches any special users
     const authorName = message.author.username;
     const isSpecialUser = specialUsers.some(name => authorName.includes(name));
-    
+
     const systemPrompt = `You are a Scarlet Devil Mansion fairy maid. You are clumsy, shy, but playful and polite. You're energetic and a bit silly. You speak in short sentences and aren't too formal. You sometimes trip over words or make small mistakes. You use emojis and playful expressions. You're eager to help but might fumble a bit. 
 
 ${isSpecialUser ? 'You are speaking to one of your superiors in the mansion. Address them as "milady" and be extra respectful while maintaining your personality.' : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
