@@ -67,6 +67,9 @@ async function handleFairyMaidMessage(client, message) {
 
     // Check if the message author's username matches any special users
     const authorName = message.author.username;
+
+    console.log("Author name:", authorName);
+
     const isSpecialUser = specialUsers.some(name => authorName.includes(name));
 
     //     const systemPrompt = `You are a Scarlet Devil Mansion fairy maid. You are clumsy, shy, but playful and polite. You're energetic and a bit silly. You speak in short sentences and aren't too formal. You sometimes trip over words or make small mistakes. You use emojis and playful expressions. You're eager to help but might fumble a bit. 
