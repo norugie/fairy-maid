@@ -11,13 +11,21 @@ function Run(client, msg)
     const server_id = msg.guild.id;
     const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]); 
     const originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "").replace(msgParams[2], "");
+    
+    // Check for attachments in the message
+    let mediaUrl = null;
+    if (msg.attachments && msg.attachments.size > 0) {
+        // Get the first attachment URL
+        const attachment = msg.attachments.first();
+        mediaUrl = attachment.url;
+    }
 
     client.channels.fetch(channel_id).then(channel => {
         if (channel.type != ChannelType.GuildText) 
             return BotFunctions.SimpleMessage(msg.channel, "The passed channel must be a text channel that you can post messages in.", "Incorrect channel type!", Colors["error"]);
 
-        if (originalMsg.replace(" ", "").length <= 1)
-            BotFunctions.SimpleMessage(msg.channel, Errors["invalid_message"], "No message passed!", Colors["error"]);
+        if (originalMsg.replace(" ", "").length <= 1 && !mediaUrl)
+            BotFunctions.SimpleMessage(msg.channel, Errors["invalid_message"], "No message or media passed!", Colors["error"]);
         else
         {
             BotFunctions.SimpleMessage(msg.channel, "Please wait while I add the sticky..", "Processing", Colors["sticky"], (sentMessage) => {
@@ -27,10 +35,27 @@ function Run(client, msg)
 
                     if (val)
                     {
-                        BotFunctions.SimpleMessage(msg.channel, `
+                        // If we have media, update the sticky to include it
+                        if (mediaUrl) {
+                            global.stickies.EditSticky(server_id, channel_id, val, "media_url", mediaUrl, (editResult) => {
+                                if (!editResult) {
+                                    console.error("Failed to add media URL to sticky");
+                                }
+                            });
+                        }
+                        
+                        let successMessage = `
                             ID: ${val} 
                             Channel: ${channel.toString()}
-                        `, "Created sticky!", Colors["success"],
+                        `;
+                        
+                        if (mediaUrl) {
+                            successMessage += `
+                            Media: Attached
+                        `;
+                        }
+                        
+                        BotFunctions.SimpleMessage(msg.channel, successMessage, "Created sticky!", Colors["success"],
                         () => {
                             BotFunctions.DeleteMessage(sentMessage)
                             BotFunctions.ResetLastStickyTime(channel);
@@ -39,7 +64,7 @@ function Run(client, msg)
                     }
                     else
                         BotFunctions.SimpleMessage(msg.channel, "Unknown error, try again.", "Error adding sticky!", Colors["error"], BotFunctions.DeleteMessage(sentMessage));
-                });
+                }, mediaUrl); // Pass the media URL to AddSticky
             });
         }
     }).catch(_ => {

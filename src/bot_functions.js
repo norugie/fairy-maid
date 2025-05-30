@@ -90,16 +90,61 @@ var exported = {
     
     SendStickyMessage: function(channel, sticky, cb)
     {
+        // Prepare message options
+        const messageOptions = {};
+        
+        // If there's a media URL, add it to the message options
+        if (sticky["media_url"]) {
+            messageOptions.files = [sticky["media_url"]];
+        }
+        
         if (sticky["is_embed"])
         {
-            this.SimpleMessage(channel, sticky["message"], sticky["title"], sticky["hex_color"], sentMessage => {
-                if (typeof cb == "function")
-                    cb(sentMessage);
-            });
+            // For embeds with media, we need to handle differently
+            if (sticky["media_url"]) {
+                const embed = new EmbedBuilder();
+                
+                if (sticky["hex_color"])
+                    embed.setColor(sticky["hex_color"]);
+                    
+                if (sticky["title"])
+                    embed.setTitle(sticky["title"]);
+                    
+                // Stupid workaround thanks to discord.js not supporting more than 1 single space inside embeds
+                const fake_space = " ឵឵  ឵឵";
+                const discordjs_not_doing_its_job = sticky["message"].replace(/([^\S\r\n][^\S\r\n])/gm, fake_space);
+                
+                embed.setDescription(discordjs_not_doing_its_job);
+                
+                // Set the image in the embed if it's an image URL
+                if (sticky["media_url"].match(/\.(jpeg|jpg|gif|png)$/i)) {
+                    embed.setImage(sticky["media_url"]);
+                    // Remove from files since we're using it in the embed
+                    delete messageOptions.files;
+                }
+                
+                messageOptions.embeds = [embed];
+                
+                channel.send(messageOptions).then(sentMessage => {
+                    if (typeof cb == "function")
+                        cb(sentMessage);
+                }).catch(err => {
+                    console.error(`Failed to send sticky message with media: ${err}`);
+                });
+            } else {
+                // Regular embed without media
+                this.SimpleMessage(channel, sticky["message"], sticky["title"], sticky["hex_color"], sentMessage => {
+                    if (typeof cb == "function")
+                        cb(sentMessage);
+                });
+            }
         }
         else
         {
-            channel.send(sticky["message"]).then(sentMessage => {
+            // For regular messages, add the text content
+            messageOptions.content = sticky["message"];
+            
+            channel.send(messageOptions).then(sentMessage => {
                 sentMessage.suppressEmbeds(true);
 
                 if (typeof cb === "function")

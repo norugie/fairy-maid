@@ -30,7 +30,8 @@ let dbOpened = false;
                                         title TEXT,
                                         message TEXT NOT NULL, 
                                         hex_color TEXT DEFAULT "#FFF68F",
-                                        is_embed BOOL DEFAULT FALSE
+                                        is_embed BOOL DEFAULT FALSE,
+                                        media_url TEXT
                                     )`
                             );
                 });
@@ -111,11 +112,12 @@ class Stickies
             const message = value.message;
             const hex_color = value.hex_color;
             const is_embed = value.is_embed;
+            const media_url = value.media_url;
 
             if (server_id != null && channel_id != null && sticky_id != null && message != null)
             {
                 this.InitStickies(server_id, channel_id);
-                this.stickies[server_id][channel_id][sticky_id - 1] = new Object({"server_id" : server_id, "channel_id" : channel_id, "title" : title, "message" : message, "hex_color" : hex_color, "is_embed" : is_embed});
+                this.stickies[server_id][channel_id][sticky_id - 1] = new Object({"server_id" : server_id, "channel_id" : channel_id, "title" : title, "message" : message, "hex_color" : hex_color, "is_embed" : is_embed, "media_url" : media_url});
             }
         }, () => {
             cb();
@@ -138,29 +140,29 @@ class Stickies
         return this.stickies[server_id][channel_id].length + 1;
     }
 
-    AddSticky(server_id, channel_id, message, cb) // Add sticky to sticky array and database stickies
+    AddSticky(server_id, channel_id, message, cb, media_url = null) // Add sticky to sticky array and database stickies
     {   
         this.TryAddSticky(cb, server_id, channel_id);
           
         let stickyCount = this.GetStickyCount(server_id, channel_id);
-        db.run("INSERT INTO stickies VALUES(NULL, ?, ?, ?, ?, ?, ?, FALSE)", [server_id, channel_id, stickyCount, null, message, null], (error) => {
+        db.run("INSERT INTO stickies VALUES(NULL, ?, ?, ?, ?, ?, ?, FALSE, ?)", [server_id, channel_id, stickyCount, null, message, null, media_url], (error) => {
             if (error)
                 cb(`Database action to insert a new value failed. (${error})`);
             else
-                cb(this.stickies[server_id][channel_id].push(new Object({"server_id" : server_id, "channel_id" : channel_id, "title" : null, "message" : message, "hex_color" : null, "is_embed" : false})));
+                cb(this.stickies[server_id][channel_id].push(new Object({"server_id" : server_id, "channel_id" : channel_id, "title" : null, "message" : message, "hex_color" : null, "is_embed" : false, "media_url" : media_url})));
         });
     }
 
-    AddFancySticky(server_id, channel_id, title, message, hex_color, cb) // Add sticky to sticky array and database stickies
+    AddFancySticky(server_id, channel_id, title, message, hex_color, cb, media_url = null) // Add sticky to sticky array and database stickies
     {   
         this.TryAddSticky(cb, server_id, channel_id);
           
         let stickyCount = this.GetStickyCount(server_id, channel_id);
-        db.run("INSERT INTO stickies VALUES(NULL, ?, ?, ?, ?, ?, ?, TRUE)", [server_id, channel_id, stickyCount, title, message, hex_color], (error) => {
+        db.run("INSERT INTO stickies VALUES(NULL, ?, ?, ?, ?, ?, ?, TRUE, ?)", [server_id, channel_id, stickyCount, title, message, hex_color, media_url], (error) => {
             if (error)
                 cb(`Database action to insert a new value failed. (${error})`);
             else
-                cb(this.stickies[server_id][channel_id].push(new Object({"server_id" : server_id, "channel_id" : channel_id, "title" : title, "message" : message, "hex_color" : hex_color, "is_embed" : true})));
+                cb(this.stickies[server_id][channel_id].push(new Object({"server_id" : server_id, "channel_id" : channel_id, "title" : title, "message" : message, "hex_color" : hex_color, "is_embed" : true, "media_url" : media_url})));
         });
     }
 

@@ -127,11 +127,11 @@ client.on("messageCreate", msg => {
                         fields: [
                             {
                                 name: "!sticky add <channel id> <discord message>",
-                                value: "Add a sticky to a channel."
+                                value: "Add a sticky to a channel. You can also attach images, videos, or GIFs to your message."
                             },
                             {
                                 name: "!sticky addfancy <channel id>",
-                                value: "Start the process of adding a fancy sticky to a channel."
+                                value: "Start the process of adding a fancy sticky to a channel. You can include images, videos, or GIFs."
                             },
                             {
                                 name: "!sticky edit <channel id> <sticky id>",
