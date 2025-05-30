@@ -5,24 +5,9 @@ const Colors = require("../messages/colors.js");
 
 const { ChannelType } = require("discord.js");
 
-function Run(client, msg)
-{
+function Run(client, msg) {
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
     const server_id = msg.guild.id;
-    
-    // Use current channel if no channel ID is provided
-    let channel_id;
-    let originalMsg;
-    
-    if (!msgParams[2] || msgParams[2].trim() === "") {
-        // No channel ID provided, use current channel
-        channel_id = msg.channel.id;
-        originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "");
-    } else {
-        // Channel ID was provided
-        channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
-        originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "").replace(msgParams[2], "");
-    }
     
     // Check for attachments in the message
     let mediaUrl = null;
@@ -31,57 +16,76 @@ function Run(client, msg)
         const attachment = msg.attachments.first();
         mediaUrl = attachment.url;
     }
+    
+    // Use current channel if no channel ID is provided
+    if (!msgParams[2] || msgParams[2].trim() === "") {
+        // No channel ID provided, use current channel
+        const channel = msg.channel;
+        const channel_id = channel.id;
+        const originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "");
+        
+        // Process the current channel directly
+        processSticky(channel, channel_id, originalMsg, mediaUrl);
+    } else {
+        // Channel ID was provided
+        const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
+        const originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "").replace(msgParams[2], "");
 
-    client.channels.fetch(channel_id).then(channel => {
-        if (channel.type != ChannelType.GuildText) 
+        // Fetch the channel
+        client.channels.fetch(channel_id).then(channel => {
+            processSticky(channel, channel_id, originalMsg, mediaUrl);
+        }).catch(_ => {
+            BotFunctions.SimpleMessage(msg.channel, Errors["invalid_channel"], "Error getting channel ID", Colors["error"]);
+        });
+    }
+    
+    function processSticky(channel, channel_id, originalMsg, mediaUrl) {
+        if (channel.type != ChannelType.GuildText) {
             return BotFunctions.SimpleMessage(msg.channel, "The passed channel must be a text channel that you can post messages in.", "Incorrect channel type!", Colors["error"]);
+        }
 
-        if (originalMsg.replace(" ", "").length <= 1 && !mediaUrl)
-            BotFunctions.SimpleMessage(msg.channel, Errors["invalid_message"], "No message or media passed!", Colors["error"]);
-        else
-        {
-            BotFunctions.SimpleMessage(msg.channel, "Please wait while I add the sticky..", "Processing", Colors["sticky"], (sentMessage) => {
-                global.stickies.AddSticky(server_id, channel_id, originalMsg, (val) => {
-                    if (typeof(val) == "string")
-                        return BotFunctions.SimpleMessage(msg.channel, val, "Error adding sticky!", Colors["error"], () => BotFunctions.DeleteMessage(sentMessage));
+        if (originalMsg.replace(" ", "").length <= 1 && !mediaUrl) {
+            return BotFunctions.SimpleMessage(msg.channel, Errors["invalid_message"], "No message or media passed!", Colors["error"]);
+        }
+        
+        BotFunctions.SimpleMessage(msg.channel, "Please wait while I add the sticky..", "Processing", Colors["sticky"], (sentMessage) => {
+            global.stickies.AddSticky(server_id, channel_id, originalMsg, (val) => {
+                if (typeof(val) == "string") {
+                    return BotFunctions.SimpleMessage(msg.channel, val, "Error adding sticky!", Colors["error"], () => BotFunctions.DeleteMessage(sentMessage));
+                }
 
-                    if (val)
-                    {
-                        // If we have media, update the sticky to include it
-                        if (mediaUrl) {
-                            global.stickies.EditSticky(server_id, channel_id, val, "media_url", mediaUrl, (editResult) => {
-                                if (!editResult) {
-                                    console.error("Failed to add media URL to sticky");
-                                }
-                            });
-                        }
-                        
-                        let successMessage = `
-                            ID: ${val} 
-                            Channel: ${channel.toString()}
-                        `;
-                        
-                        if (mediaUrl) {
-                            successMessage += `
-                            Media: Attached
-                        `;
-                        }
-                        
-                        BotFunctions.SimpleMessage(msg.channel, successMessage, "Created sticky!", Colors["success"],
-                        () => {
-                            BotFunctions.DeleteMessage(sentMessage)
-                            BotFunctions.ResetLastStickyTime(channel);
-                            BotFunctions.ShowChannelStickies(server_id, channel, null);
+                if (val) {
+                    // If we have media, update the sticky to include it
+                    if (mediaUrl) {
+                        global.stickies.EditSticky(server_id, channel_id, val, "media_url", mediaUrl, (editResult) => {
+                            if (!editResult) {
+                                console.error("Failed to add media URL to sticky");
+                            }
                         });
                     }
-                    else
-                        BotFunctions.SimpleMessage(msg.channel, "Unknown error, try again.", "Error adding sticky!", Colors["error"], BotFunctions.DeleteMessage(sentMessage));
-                }, mediaUrl); // Pass the media URL to AddSticky
-            });
-        }
-    }).catch(_ => {
-        BotFunctions.SimpleMessage(msg.channel, Errors["invalid_channel"], "Error getting channel ID", Colors["error"]);
-    });
+                    
+                    let successMessage = `
+                        ID: ${val} 
+                        Channel: ${channel.toString()}
+                    `;
+                    
+                    if (mediaUrl) {
+                        successMessage += `
+                        Media: Attached
+                    `;
+                    }
+                    
+                    BotFunctions.SimpleMessage(msg.channel, successMessage, "Created sticky!", Colors["success"], () => {
+                        BotFunctions.DeleteMessage(sentMessage);
+                        BotFunctions.ResetLastStickyTime(channel);
+                        BotFunctions.ShowChannelStickies(server_id, channel, null);
+                    });
+                } else {
+                    BotFunctions.SimpleMessage(msg.channel, "Unknown error, try again.", "Error adding sticky!", Colors["error"], () => BotFunctions.DeleteMessage(sentMessage));
+                }
+            }, mediaUrl); // Pass the media URL to AddSticky
+        });
+    }
 }
 
 module.exports = {Run};
