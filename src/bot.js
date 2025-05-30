@@ -16,7 +16,10 @@ const ListCommand = require("./commands/list.js");
 // Import fairy maid functionality
 const { handleFairyMaidMessage } = require("./fairy_maid.js");
 
-const { Client, GatewayIntentBits, EmbedBuilder, ActivityType } = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder, ActivityType, Events } = require("discord.js");
+
+// Import slash command handlers
+const { registerCommands, handleInteraction } = require("./slash_commands.js");
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -31,7 +34,7 @@ global.stickies = new Stickies();
 const { BoostManager } = require("./boost_manager.js");
 global.boostManager = new BoostManager();
 
-client.on("ready", () => {
+client.on(Events.ClientReady, () => {
     global.discordApplication = client.application;
 
     // Set the bot's status
@@ -44,6 +47,9 @@ client.on("ready", () => {
     });
 
     console.log(`Logged in as ${client.user.tag}! Status set to "Playing dusting the mansion"`);
+    
+    // Register slash commands
+    registerCommands(client);
     global.stickies.LoadStickies(client.guilds, () => {
         // Delete all Sticky bot messages in the last 50 messages for every server's channels
         for (const [server_id, server] of client.guilds.cache) {
@@ -72,7 +78,7 @@ client.on("ready", () => {
 });
 
 // Delete all stickies from a channel it's deleted
-client.on("channelDelete", channel => {
+client.on(Events.ChannelDelete, channel => {
     const server_id = channel.guild.id;
     global.stickies.RemoveChannelStickies(server_id, channel.id, () => {
         console.log(`Removed stickies for deleted channel ${channel.id} from server: ${server_id}`);
@@ -80,7 +86,7 @@ client.on("channelDelete", channel => {
 });
 
 // Delete all stickies from a server when it's deleted
-client.on("guildDelete", guild => {
+client.on(Events.GuildDelete, guild => {
     global.stickies.RemoveServerStickies(guild.id, () => {
         console.log("Removed stickies from server: ", guild.id);
     });
@@ -90,7 +96,7 @@ client.on("guildDelete", guild => {
 });
 
 // Listen for GuildMemberUpdate events to detect when a member stops boosting
-client.on("guildMemberUpdate", (oldMember, newMember) => {
+client.on(Events.GuildMemberUpdate, (oldMember, newMember) => {
     // Check if the member was boosting before but isn't now
     const wasBooster = oldMember.premiumSince !== null;
     const isBooster = newMember.premiumSince !== null;
@@ -101,7 +107,15 @@ client.on("guildMemberUpdate", (oldMember, newMember) => {
     }
 });
 
-client.on("messageCreate", async (msg) => {
+// Handle slash command interactions
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (interaction.isChatInputCommand()) {
+        await handleInteraction(interaction);
+    }
+});
+
+// Handle traditional prefix commands
+client.on(Events.MessageCreate, async (msg) => {
     // Originally it was gonna ignore all bots, but it probably makes more sense to just ignore itself
     //    if (msg.author.bot)
     //        return;

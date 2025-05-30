@@ -41,13 +41,34 @@ var exported = {
             const discordjs_not_doing_its_job = message.replace(/([^\S\r\n][^\S\r\n])/gm, fake_space);
        
             embed.setDescription(discordjs_not_doing_its_job); 
-        
-            channel.send({embeds: [embed]}).then(sentMessage => {
-                if (typeof(cb) == "function") 
-                    cb(sentMessage) 
-            }).catch(err => {                    
-                console.error(`Failed to create a Simple Message: ${err}`);
-            });
+            
+            // Check if this is an interaction reply or a regular channel
+            if (channel.isRepliable && typeof channel.reply === 'function') {
+                // This is an interaction
+                if (channel.replied || channel.deferred) {
+                    channel.editReply({embeds: [embed]}).then(sentMessage => {
+                        if (typeof(cb) == "function") 
+                            cb(sentMessage);
+                    }).catch(err => {                    
+                        console.error(`Failed to edit interaction reply: ${err}`);
+                    });
+                } else {
+                    channel.reply({embeds: [embed]}).then(sentMessage => {
+                        if (typeof(cb) == "function") 
+                            cb(sentMessage);
+                    }).catch(err => {                    
+                        console.error(`Failed to reply to interaction: ${err}`);
+                    });
+                }
+            } else {
+                // This is a regular channel
+                channel.send({embeds: [embed]}).then(sentMessage => {
+                    if (typeof(cb) == "function") 
+                        cb(sentMessage);
+                }).catch(err => {                    
+                    console.error(`Failed to create a Simple Message: ${err}`);
+                });
+            }
         }
         catch(err)
         {
