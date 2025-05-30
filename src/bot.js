@@ -144,12 +144,12 @@ client.on("messageCreate", msg => {
                         color: Colors["info"],
                         fields: [
                             {
-                                name: "!sticky add [channel id] <discord message>",
-                                value: "Add a sticky to a channel (uses current channel if no channel ID is provided). You can also attach images, videos, or GIFs to your message."
+                                name: "!sticky add <channel id> <discord message>",
+                                value: "Add a sticky to a channel. You can also attach images, videos, or GIFs to your message."
                             },
                             {
-                                name: "!sticky addfancy [channel id]",
-                                value: "Start the process of creating a fancy sticky with a title, color, and message (uses current channel if no channel ID is provided). You can include images, videos, or GIFs."
+                                name: "!sticky addfancy <channel id>",
+                                value: "Start the process of creating a fancy sticky with a title, color, and message. You can include images, videos, or GIFs."
                             },
                             {
                                 name: "!sticky edit <channel id> <sticky id>",

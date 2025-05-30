@@ -8,6 +8,8 @@ const { ChannelType } = require("discord.js");
 function Run(client, msg) {
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
     const server_id = msg.guild.id;
+    const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]); 
+    const originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "").replace(msgParams[2], "");
     
     // Check for attachments in the message
     let mediaUrl = null;
@@ -16,30 +18,8 @@ function Run(client, msg) {
         const attachment = msg.attachments.first();
         mediaUrl = attachment.url;
     }
-    
-    // Use current channel if no channel ID is provided
-    if (!msgParams[2] || msgParams[2].trim() === "") {
-        // No channel ID provided, use current channel
-        const channel = msg.channel;
-        const channel_id = channel.id;
-        const originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "");
-        
-        // Process the current channel directly
-        processSticky(channel, channel_id, originalMsg, mediaUrl);
-    } else {
-        // Channel ID was provided
-        const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
-        const originalMsg = msg.content.replace(msgParams[0], "").replace(msgParams[1], "").replace(msgParams[2], "");
 
-        // Fetch the channel
-        client.channels.fetch(channel_id).then(channel => {
-            processSticky(channel, channel_id, originalMsg, mediaUrl);
-        }).catch(_ => {
-            BotFunctions.SimpleMessage(msg.channel, Errors["invalid_channel"], "Error getting channel ID", Colors["error"]);
-        });
-    }
-    
-    function processSticky(channel, channel_id, originalMsg, mediaUrl) {
+    client.channels.fetch(channel_id).then(channel => {
         if (channel.type != ChannelType.GuildText) {
             return BotFunctions.SimpleMessage(msg.channel, "The passed channel must be a text channel that you can post messages in.", "Incorrect channel type!", Colors["error"]);
         }
@@ -85,7 +65,9 @@ function Run(client, msg) {
                 }
             }, mediaUrl); // Pass the media URL to AddSticky
         });
-    }
+    }).catch(_ => {
+        BotFunctions.SimpleMessage(msg.channel, Errors["invalid_channel"], "Error getting channel ID", Colors["error"]);
+    });
 }
 
 module.exports = {Run};

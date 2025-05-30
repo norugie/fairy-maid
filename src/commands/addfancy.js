@@ -9,28 +9,9 @@ const { ChannelType } = require("discord.js");
 function Run(client, msg) {
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
     const server_id = msg.guild.id;
-    
-    // Use current channel if no channel ID is provided
-    if (!msgParams[2] || msgParams[2].trim() === "") {
-        // No channel ID provided, use current channel
-        const channel = msg.channel;
-        const channel_id = channel.id;
-        
-        // Process the current channel directly
-        processChannel(channel, channel_id);
-    } else {
-        // Channel ID was provided
-        const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
+    const channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
 
-        // Fetch the channel
-        client.channels.fetch(channel_id).then(channel => {
-            processChannel(channel, channel_id);
-        }).catch(_ => {
-            BotFunctions.SimpleMessage(msg.channel, Errors["invalid_channel"], "Error getting channel ID", Colors["error"]);
-        });
-    }
-    
-    function processChannel(channel, channel_id) {
+    client.channels.fetch(channel_id).then(channel => {
         if (channel.type != ChannelType.GuildText) {
             return BotFunctions.SimpleMessage(msg.channel, "The passed channel must be a text channel that you can post messages in.", "Incorrect channel type!", Colors["error"]);
         }
@@ -71,7 +52,9 @@ function Run(client, msg) {
                 }
             }, media_url); // Pass the media URL to AddFancySticky
         });
-    }
+    }).catch(_ => {
+        BotFunctions.SimpleMessage(msg.channel, Errors["invalid_channel"], "Error getting channel ID", Colors["error"]);
+    });
 }
 
 module.exports = {Run};
