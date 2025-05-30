@@ -13,6 +13,21 @@ const characterNameVariants = [
   'Fairy maid'
 ];
 
+// List of special users to be addressed as "milady"
+const specialUsers = [
+  // SDM members
+  'Remilia Scarlet',
+  'Flandre Scarlet',
+  'Sakuya Izayoi',
+  'Patchouli Knowledge',
+  'Hong Meiling',
+  'Koakuma',
+  // Others
+  'Head Maid',
+  'Krul Tepes',
+  '𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚'
+];
+
 /**
  * Handles messages that mention the fairy maid
  * @param {Object} client - Discord.js client
@@ -45,7 +60,13 @@ async function handleFairyMaidMessage(client, message) {
     // Remove bot mention from prompt to clean up
     const cleanedInput = message.content.replace(/<@!?(\d+)>/, '').trim();
 
-    const systemPrompt = `You are a Scarlet Devil Mansion fairy maid. You are meek, childish, clumsy, but very diligent and eager to help. You speak politely, and you end your responses with bows or curtsies. You refer to others as "Master" or "Mistress" as appropriate.`;
+    // Check if the message author's username matches any special users
+    const authorName = message.author.username;
+    const isSpecialUser = specialUsers.some(name => authorName.includes(name));
+    
+    const systemPrompt = `You are a Scarlet Devil Mansion fairy maid. You are clumsy, shy, but playful and polite. You're energetic and a bit silly. You speak in short sentences and aren't too formal. You sometimes trip over words or make small mistakes. You use emojis and playful expressions. You're eager to help but might fumble a bit. 
+
+${isSpecialUser ? 'You are speaking to one of your superiors in the mansion. Address them as "milady" and be extra respectful while maintaining your personality.' : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
@@ -68,5 +89,6 @@ async function handleFairyMaidMessage(client, message) {
 
 module.exports = {
   handleFairyMaidMessage,
-  characterNameVariants
+  characterNameVariants,
+  specialUsers
 };
