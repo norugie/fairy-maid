@@ -13,6 +13,9 @@ const PreviewCommand = require("./commands/preview.js");
 const PreviewFancyCommand = require("./commands/previewfancy.js");
 const ListCommand = require("./commands/list.js");
 
+// Import fairy maid functionality
+const { handleFairyMaidMessage } = require("./fairy_maid.js");
+
 const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
 const client = new Client({ 
     intents: [
@@ -94,12 +97,16 @@ client.on("guildMemberUpdate", (oldMember, newMember) => {
     }
 });
 
-client.on("messageCreate", msg => {
+client.on("messageCreate", async (msg) => {
     // Originally it was gonna ignore all bots, but it probably makes more sense to just ignore itself
     //    if (msg.author.bot)
     //        return;
     if (msg.author.bot && msg.author.id == global.discordApplication.id)
         return;
+    
+    // Check if this is a fairy maid message and handle it
+    const isFairyMaidMessage = await handleFairyMaidMessage(client, msg);
+    if (isFairyMaidMessage) return; // Skip other processing if fairy maid handled the message
     
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
     
