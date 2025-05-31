@@ -167,7 +167,6 @@ async function handleFairyMaidMessage(client, message) {
           console.log(`- Display name: ${displayName}`);
           console.log(`- Nickname: ${nickname}`);
           console.log(`- Global name: ${globalName}`);
-          console.log(`- User ID: ${user.id}`);
           
           // Create an array of all name variants to check against
           const checkNames = [username, displayName, nickname, globalName].filter(Boolean);
@@ -321,8 +320,6 @@ async function handleFairyMaidMessage(client, message) {
     7. Don't be overly formal or use complex language.
 
     ${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : userTitle === 'Sir' ? `Address them as "Sir ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
-
-    console.log("System prompt:", systemPrompt);
 
     // Get user's conversation history
     const userId = message.author.id;
