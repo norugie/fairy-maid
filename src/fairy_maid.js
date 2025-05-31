@@ -109,6 +109,68 @@ async function handleFairyMaidMessage(client, message) {
     }
     
     const isSpecialUser = userTitle !== '';
+    
+    // Process mentions in the message to identify other special users
+    const mentionedUsers = [];
+    message.mentions.users.forEach(user => {
+      if (user.id !== client.user.id) { // Skip the bot itself
+        // Check if the mentioned user is a special user
+        let mentionedUserTitle = '';
+        let mentionedSpecificName = '';
+        
+        // Check Lady category
+        for (const [name, variants] of Object.entries(specialUserCategories.lady)) {
+          const username = user.username;
+          const displayName = message.guild.members.cache.get(user.id)?.displayName || username;
+          
+          if (variants.some(variant => 
+            username.includes(variant) || displayName.includes(variant)
+          )) {
+            mentionedUserTitle = 'Lady';
+            mentionedSpecificName = name;
+            break;
+          }
+        }
+        
+        // Check Mistress category if not found
+        if (!mentionedUserTitle) {
+          for (const [name, variants] of Object.entries(specialUserCategories.mistress)) {
+            const username = user.username;
+            const displayName = message.guild.members.cache.get(user.id)?.displayName || username;
+            
+            if (variants.some(variant => 
+              username.includes(variant) || displayName.includes(variant)
+            )) {
+              mentionedUserTitle = 'Mistress';
+              mentionedSpecificName = name;
+              break;
+            }
+          }
+        }
+        
+        // Add to the mentioned users array
+        mentionedUsers.push({
+          id: user.id,
+          username: user.username,
+          isSpecial: mentionedUserTitle !== '',
+          title: mentionedUserTitle,
+          specificName: mentionedSpecificName
+        });
+      }
+    });
+    
+    // Build information about mentioned users for the prompt
+    let mentionedUsersInfo = '';
+    if (mentionedUsers.length > 0) {
+      mentionedUsersInfo = '\n\nThe following users were mentioned in this message:\n';
+      mentionedUsers.forEach(user => {
+        if (user.isSpecial) {
+          mentionedUsersInfo += `- ${user.title} ${user.specificName} (${user.username})\n`;
+        } else {
+          mentionedUsersInfo += `- Guest ${user.username}\n`;
+        }
+      });
+    }
 
     const systemPrompt = `You are the collective voice of the Fairy Maids who work at the Scarlet Devil Mansion in Gensokyo. You speak as "we" and "us" because there are many of you.
 
@@ -142,7 +204,7 @@ IMPORTANT RULES FOR YOUR RESPONSES:
 6. Occasionally make small mistakes or trip over words.
 7. Don't be overly formal or use complex language.
 
-${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
+${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}${mentionedUsersInfo}`;
 
     // Get user's conversation history
     const userId = message.author.id;
