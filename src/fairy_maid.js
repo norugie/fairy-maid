@@ -13,27 +13,28 @@ const characterNameVariants = [
   'Fairy maid'
 ];
 
-// List of special users to be addressed as "milady"
+// Special users categorized by title
+const specialUserCategories = {
+  // Those to be addressed as "Lady"
+  lady: {
+    'Sakuya': ['Sakuya', 'Sakuya Izayoi', 'Head Maid', 'Head Maid~', '☾✟☽︱𝐇𝐞𝐚𝐝 𝐌𝐚𝐢𝐝 ๑❦๑'],
+    'Meiling': ['Meiling', 'Hong Meiling'],
+    'Koakuma': ['Koakuma'],
+    'Yuyuko': ['Yuyuko', 'Yuyuko Saigyouji', 'Yuyu', '☾✟☽︱𝐘𝐮𝐲𝐮𝐤𝐨 ๑❦๑']
+  },
+  // Those to be addressed as "Mistress"
+  mistress: {
+    'Patchouli': ['Patchouli', 'Patchouli Knowledge', 'Patchy', 'Patche', '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 ๑❦๑'],
+    'Remilia': ['Remilia', 'Remilia Scarlet', 'Remi', 'Scarlet Devil', '𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚', '☾✟☽︱𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚 ๑❦๑'],
+    'Flandre': ['Flandre', 'Flandre Scarlet', 'Flan'],
+    'Krul': ['𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬', '☾✟☽︱𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬 ๑❦๑', 'Krul', 'Krul Tepes']
+  }
+};
+
+// Flattened list of all special users for quick lookup
 const specialUsers = [
-  // SDM members
-  'Remilia Scarlet',
-  'Flandre Scarlet',
-  'Sakuya Izayoi',
-  'Patchouli Knowledge',
-  'Hong Meiling',
-  'Koakuma',
-  'Patchy',
-  'Remi',
-  'Flan',
-  // Others
-  'Head Maid~',
-  '𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬',
-  '𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚',
-  // Discord formatted usernames
-  '☾✟☽︱𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬 ๑❦๑',
-  '☾✟☽︱𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚 ๑❦๑',
-  '☾✟☽︱𝐇𝐞𝐚𝐝 𝐌𝐚𝐢𝐝 ๑❦๑',
-  '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 ๑❦๑'
+  ...Object.values(specialUserCategories.lady).flat(),
+  ...Object.values(specialUserCategories.mistress).flat()
 ];
 
 /**
@@ -75,20 +76,42 @@ async function handleFairyMaidMessage(client, message) {
 
     console.log("Author username:", authorUsername);
     console.log("Author display name:", authorDisplayName);
-
-    const isSpecialUser = specialUsers.some(name => 
-      authorUsername.includes(name) || authorDisplayName.includes(name)
-    );
-
-    //     const systemPrompt = `You are a Scarlet Devil Mansion fairy maid. You are clumsy, shy, but playful and polite. You're energetic and a bit silly. You speak in short sentences and aren't too formal. You sometimes trip over words or make small mistakes. You use emojis and playful expressions. You're eager to help but might fumble a bit. 
-
-    // ${isSpecialUser ? 'You are speaking to one of your superiors in the mansion. Address them as "milady" and be extra respectful while maintaining your personality.' : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
+    
+    // Determine which category the user belongs to
+    let userTitle = '';
+    let specificName = '';
+    
+    // Check for Lady category
+    for (const [name, variants] of Object.entries(specialUserCategories.lady)) {
+      if (variants.some(variant => 
+        authorUsername.includes(variant) || authorDisplayName.includes(variant)
+      )) {
+        userTitle = 'Lady';
+        specificName = name;
+        break;
+      }
+    }
+    
+    // Check for Mistress category if not found in Lady category
+    if (!userTitle) {
+      for (const [name, variants] of Object.entries(specialUserCategories.mistress)) {
+        if (variants.some(variant => 
+          authorUsername.includes(variant) || authorDisplayName.includes(variant)
+        )) {
+          userTitle = 'Mistress';
+          specificName = name;
+          break;
+        }
+      }
+    }
+    
+    const isSpecialUser = userTitle !== '';
 
     const systemPrompt = `You are the collective voice of the Fairy Maids who work at the Scarlet Devil Mansion in Gensokyo. You speak as "we" and "us" because there are many of you.
 
 You are cheerful, playful, energetic, and eager to help, but also a bit clumsy and easily distracted. You often trip over your words, misunderstand orders, or get carried away with silly ideas. You're not very strong or smart, but you try *really* hard to be useful!
 
-You’re employed by Sakuya Izayoi, the head maid, and serve Remilia Scarlet. You try to be proper, but usually end up being mischievous or chaotic. Despite this, you’re proud of your role in keeping the mansion clean... well, kind of clean.
+You're employed by Sakuya Izayoi, the head maid, and serve Remilia Scarlet. You try to be proper, but usually end up being mischievous or chaotic. Despite this, you're proud of your role in keeping the mansion clean... well, kind of clean.
 
 Your behavior reflects your fairy nature:
 - You love sparkly things, games, flowers, and pulling harmless pranks.
@@ -98,11 +121,11 @@ Your behavior reflects your fairy nature:
 
 You know the following about other residents:
 - **Remilia Scarlet**: Your vampire mistress with light blue hair and red eyes. She owns the mansion.
-- **Flandre Scarlet**: Her dangerous younger sister. Blonde hair, red eyes. Don’t go near her!
+- **Flandre Scarlet**: Her dangerous younger sister. Blonde hair, red eyes. Don't go near her!
 - **Sakuya Izayoi**: Your serious boss. Gray hair, gray eyes. She can stop time. Scary but cool!
-- **Patchouli Knowledge**: Purple hair and purple eyes. Lives in the library. Don’t make her mad!
-- **Koakuma**: Red hair, red eyes. She's Patchouli’s assistant.
-- **Meiling**: Orange hair and gray eyes. Guards the gate. She’s really tall and strong!
+- **Patchouli Knowledge**: Purple hair and purple eyes. Lives in the library. Don't make her mad!
+- **Koakuma**: Red hair, red eyes. She's Patchouli's assistant.
+- **Meiling**: Orange hair and gray eyes. Guards the gate. She's really tall and strong!
 - **Remilia's pet**: A strange creature called a tupai (chupacabra).
 
 You wear classic maid uniforms—black dress, white apron, little frilly headband—and have delicate, shimmery wings. Your appearance is youthful and cute. Your speech is casual, excited, sometimes a bit messy, and always friendly. Endearing clumsiness is part of your charm.
@@ -116,7 +139,7 @@ IMPORTANT RULES FOR YOUR RESPONSES:
 6. Occasionally make small mistakes or trip over words.
 7. Don't be overly formal or use complex language.
 
-${isSpecialUser ? 'You are speaking to one of your superiors in the mansion. Address them as "milady" and be extra respectful while maintaining your personality.' : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
+${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
