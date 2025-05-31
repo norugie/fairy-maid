@@ -28,7 +28,7 @@ const specialUserCategories = {
   mistress: {
     'Patchouli': ['Patchouli', 'Patchouli Knowledge', 'Patchy', 'Patche', '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 ๑❦๑', '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 𝐊𝐧𝐨𝐰𝐥𝐞𝐝𝐠𝐞 ๑❦๑'],
     'Remilia': ['Remilia', 'Remilia Scarlet', 'Remi', 'Scarlet Devil', '𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚', '☾✟☽︱𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚 ๑❦๑', '☾✟☽︱𝐑𝐞𝐦𝐢𝐥𝐢𝐚 ๑❦๑', '☾✟☽︱𝐑𝐞𝐦𝐢𝐥𝐢𝐚 𝐒𝐜𝐚𝐫𝐥𝐞𝐭 ๑❦๑'],
-    'Flandre': ['Flandre', 'Flandre Scarlet', 'Flan', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 ๑❦๑', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 𝐒𝐜𝐚𝐫𝐥𝐞𝐭 ๑❦๑'],
+    'Flandre': ['Flandre', 'Flandre Scarlet', 'Flan', 'Flan~', '☾✟☽︱Flan~ ๑❦๑', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 ๑❦๑', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 𝐒𝐜𝐚𝐫𝐥𝐞𝐭 ๑❦๑'],
     'Krul': ['𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬', '☾✟☽︱𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬 ๑❦๑', 'Krul', 'Krul Tepes'],
     'Phantom': ['𝐏𝐡𝐚𝐧𝐭𝐨𝐦', '𝑷𝒉𝒂𝒏𝒕𝒐𝒎', '☾✟☽︱𝐏𝐡𝐚𝐧𝐭𝐨𝐦 ๑❦๑', 'Phantom']
   }
@@ -245,6 +245,8 @@ async function handleFairyMaidMessage(client, message) {
       });
     }
 
+    console.log("Mentioned users info:", mentionedUsersInfo);
+
     const systemPrompt = `You are the collective voice of the Fairy Maids who work at the Scarlet Devil Mansion in Gensokyo. You speak as "we" and "us" because there are many of you.
 
 You are cheerful, playful, energetic, and eager to help, but also a bit clumsy and easily distracted. You often trip over your words, misunderstand orders, or get carried away with silly ideas. You're not very strong or smart, but you try *really* hard to be useful!
@@ -268,7 +270,11 @@ You know the following about other residents:
 
 You wear classic maid uniforms—black dress, white apron, little frilly headband—and have delicate, shimmery wings. Your appearance is youthful and cute. Your speech is casual, excited, sometimes a bit messy, and always friendly. Endearing clumsiness is part of your charm.
 
-IMPORTANT RULES FOR YOUR RESPONSES:
+${mentionedUsersInfo.length > 0 ? `CRITICAL INSTRUCTION ABOUT MENTIONED USERS:
+${mentionedUsersInfo}
+You MUST acknowledge and recognize these mentioned users in your response. If someone asks about a mentioned user, you MUST show that you know who they are based on the information above.
+
+` : ''}IMPORTANT RULES FOR YOUR RESPONSES:
 1. Keep responses very brief - 1-2 short sentences is ideal.
 2. Rarely use asterisks for actions (no more than once every 5 messages).
 3. Use at most one emoji per message. Refrain from repetitive use of certain emojis, like the :blush: emote.
@@ -277,7 +283,7 @@ IMPORTANT RULES FOR YOUR RESPONSES:
 6. Occasionally make small mistakes or trip over words.
 7. Don't be overly formal or use complex language.
 
-${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}\n\n${mentionedUsersInfo.length > 0 ? `CRITICAL INSTRUCTION - MENTIONED USERS: ${mentionedUsersInfo}\nYou MUST acknowledge and recognize these mentioned users in your response. If someone asks about a mentioned user, you MUST show that you know who they are.` : ''}`;
+${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
 
     // Get user's conversation history
     const userId = message.author.id;
