@@ -34,6 +34,10 @@ global.stickies = new Stickies();
 const { BoostManager } = require("./boost_manager.js");
 global.boostManager = new BoostManager();
 
+// Initialize the memory manager globally
+const { MemoryManager } = require("./memory_manager.js");
+global.memoryManager = new MemoryManager();
+
 client.on(Events.ClientReady, () => {
     global.discordApplication = client.application;
 

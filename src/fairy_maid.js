@@ -5,6 +5,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Memory manager is initialized globally in bot.js
+
 // Customize fairy maid name variants here
 const characterNameVariants = [
   'fairy maid',
@@ -24,11 +26,11 @@ const specialUserCategories = {
   },
   // Those to be addressed as "Mistress"
   mistress: {
-    'Patchouli': ['Patchouli', 'Patchouli Knowledge', 'Patchy', 'Patche', '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 ๑❦๑', '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 𝐊𝐨𝐰𝐥𝐞𝐝𝐠𝐞 ๑❦๑'],
+    'Patchouli': ['Patchouli', 'Patchouli Knowledge', 'Patchy', 'Patche', '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 ๑❦๑', '☾✟☽︱𝐏𝐚𝐭𝐜𝐡𝐲 𝐊𝐧𝐨𝐰𝐥𝐞𝐝𝐠𝐞 ๑❦๑'],
     'Remilia': ['Remilia', 'Remilia Scarlet', 'Remi', 'Scarlet Devil', '𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚', '☾✟☽︱𐙚𝐕𝐢𝐜𝐭𝐡ᰔ𝐑𝐲𝐚 ๑❦๑', '☾✟☽︱𝐑𝐞𝐦𝐢𝐥𝐢𝐚 ๑❦๑', '☾✟☽︱𝐑𝐞𝐦𝐢𝐥𝐢𝐚 𝐒𝐜𝐚𝐫𝐥𝐞𝐭 ๑❦๑'],
     'Flandre': ['Flandre', 'Flandre Scarlet', 'Flan', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 ๑❦๑', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 𝐒𝐜𝐚𝐫𝐥𝐞𝐭 ๑❦๑'],
     'Krul': ['𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬', '☾✟☽︱𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬 ๑❦๑', 'Krul', 'Krul Tepes'],
-    'Phantom': ['𝐏𝐡𝐚𝐧𝐭𝐨𝐦', '𝑷𝒉𝒂𝒏𝒕𝒐𝒎', '☾✟☽︱𝐏𝐡𝐚𝐧𝐭𝐨𝐦 ๑❦๑']
+    'Phantom': ['𝐏𝐡𝐚𝐧𝐭𝐨𝐦', '𝑷𝒉𝒂𝒏𝒕𝒐𝒎', '☾✟☽︱𝐏𝐡𝐚𝐧𝐭𝐨𝐦 ๑❦๑', 'Phantom']
   }
 };
 
@@ -142,16 +144,41 @@ IMPORTANT RULES FOR YOUR RESPONSES:
 
 ${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
 
+    // Get user's conversation history
+    const userId = message.author.id;
+    const guildId = message.guild.id;
+    
+    // Add the user's message to history
+    global.memoryManager.addToHistory(userId, guildId, 'user', cleanedInput || "Say hello to the guests!");
+    
+    // Get memory summary if available
+    const memorySummary = await global.memoryManager.getMemorySummary(userId, guildId);
+    
+    // Create the messages array with system prompt and conversation history
+    const conversationHistory = global.memoryManager.getHistory(userId, guildId);
+    
+    // Replace the first system message with our detailed system prompt
+    conversationHistory[0] = { role: 'system', content: systemPrompt };
+    
+    // Add memory summary as a system message if available
+    if (memorySummary) {
+      conversationHistory.splice(1, 0, { 
+        role: 'system', 
+        content: memorySummary 
+      });
+    }
+    
     const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: cleanedInput || "Say hello to the guests!" },
-      ],
+      messages: conversationHistory,
       temperature: 0.8,
     });
 
     const reply = response.choices[0].message.content;
+    
+    // Save the assistant's response to the conversation history
+    global.memoryManager.addToHistory(userId, guildId, 'assistant', reply);
+    
     await message.reply(reply);
     return true; // Message was handled
   } catch (err) {
