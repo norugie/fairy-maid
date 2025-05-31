@@ -118,34 +118,46 @@ async function handleFairyMaidMessage(client, message) {
         let mentionedUserTitle = '';
         let mentionedSpecificName = '';
         
-        // Check Lady category
-        for (const [name, variants] of Object.entries(specialUserCategories.lady)) {
-          const username = user.username;
-          const displayName = message.guild.members.cache.get(user.id)?.displayName || username;
-          
-          if (variants.some(variant => 
-            username.includes(variant) || displayName.includes(variant)
-          )) {
-            mentionedUserTitle = 'Lady';
-            mentionedSpecificName = name;
-            break;
-          }
-        }
+        // Get member from cache to access their nickname and other properties
+        const member = message.guild.members.cache.get(user.id);
+        const username = user.username;
+        const displayName = member?.displayName || username;
+        const nickname = member?.nickname || '';
         
-        // Check Mistress category if not found
-        if (!mentionedUserTitle) {
-          for (const [name, variants] of Object.entries(specialUserCategories.mistress)) {
-            const username = user.username;
-            const displayName = message.guild.members.cache.get(user.id)?.displayName || username;
-            
-            if (variants.some(variant => 
-              username.includes(variant) || displayName.includes(variant)
-            )) {
-              mentionedUserTitle = 'Mistress';
-              mentionedSpecificName = name;
-              break;
+        // Log for debugging
+        console.log(`Mentioned user: ${username}, Display name: ${displayName}, Nickname: ${nickname}`);
+        
+        // Check all possible name variants for this user
+        const checkNames = [username, displayName, nickname].filter(Boolean);
+        
+        // Function to check if any name variant matches any special user variant
+        const checkSpecialUserMatch = (category, title) => {
+          for (const [name, variants] of Object.entries(category)) {
+            for (const checkName of checkNames) {
+              // Direct match check
+              if (variants.includes(checkName)) {
+                mentionedUserTitle = title;
+                mentionedSpecificName = name;
+                return true;
+              }
+              
+              // Partial match check
+              for (const variant of variants) {
+                if (checkName.includes(variant) || variant.includes(checkName)) {
+                  mentionedUserTitle = title;
+                  mentionedSpecificName = name;
+                  return true;
+                }
+              }
             }
           }
+          return false;
+        };
+        
+        // Check Lady category first
+        if (!checkSpecialUserMatch(specialUserCategories.lady, 'Lady')) {
+          // Then check Mistress category
+          checkSpecialUserMatch(specialUserCategories.mistress, 'Mistress');
         }
         
         // Add to the mentioned users array
