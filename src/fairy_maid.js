@@ -272,7 +272,7 @@ IMPORTANT RULES FOR YOUR RESPONSES:
 6. Occasionally make small mistakes or trip over words.
 7. Don't be overly formal or use complex language.
 
-${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}${mentionedUsersInfo}`;
+${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}\n\n${mentionedUsersInfo.length > 0 ? `IMPORTANT: ${mentionedUsersInfo}` : ''}`;
 
     // Get user's conversation history
     const userId = message.author.id;
