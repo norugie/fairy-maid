@@ -110,6 +110,9 @@ async function handleFairyMaidMessage(client, message) {
     
     const isSpecialUser = userTitle !== '';
     
+    // We'll use a more generalized approach to detect special users in mentions
+    // This will work for any user without requiring hardcoded IDs
+    
     // Process mentions in the message to identify other special users
     const mentionedUsers = [];
     message.mentions.users.forEach(user => {
@@ -118,119 +121,99 @@ async function handleFairyMaidMessage(client, message) {
         let mentionedUserTitle = '';
         let mentionedSpecificName = '';
         
-        // Get member from cache to access their nickname and other properties
-        const member = message.guild.members.cache.get(user.id);
-        const username = user.username;
-        const displayName = member?.displayName || username;
-        const nickname = member?.nickname || '';
-        const globalName = user.globalName || ''; // Discord's global display name
-        
-        // Log for debugging
-        console.log(`Mentioned user details:`);
-        console.log(`- Username: ${username}`);
-        console.log(`- Display name: ${displayName}`);
-        console.log(`- Nickname: ${nickname}`);
-        console.log(`- Global name: ${globalName}`);
-        console.log(`- User ID: ${user.id}`);
-        
-        // Check all possible name variants for this user
-        const checkNames = [username, displayName, nickname, globalName].filter(Boolean);
-        
-        // Enhanced detection for users whose display names match special users
-        // This is more reliable than the partial matching approach
-        
-        // First, try to directly identify the user by using the cached member info
-        // This is the most reliable approach as it gets the actual display name from the guild
+        // Get the complete member information for the mentioned user
+        // This is critical for getting the proper display name with all formatting
         try {
-          // We'll use the member that's already in cache - no async fetch needed
-          if (member) {
-            console.log('Using member from cache:', member.displayName);
+          // First, try to fetch the full member object to get the proper display name
+          // This is important because the display name may contain special formatting
+          // that's not visible in the message object
+          const member = message.guild.members.cache.get(user.id);
+          
+          // If we couldn't get the member from cache, try to fetch it
+          if (!member) {
+            console.log(`Member not found in cache for user ID: ${user.id}`);
+          } else {
+            console.log(`Found member in cache: ${member.displayName}`);
           }
-        } catch (error) {
-          console.log('Error accessing member:', error.message);
-        }
-        
-        // Re-assign display name with the freshly fetched data
-        const fetchedDisplayName = member?.displayName || displayName;
-        console.log('Using display name for matching:', fetchedDisplayName);
-        
-        // Direct check for display name in special users list
-        // This is the most straightforward approach for tagged users
-        let directMatchFound = false;
-        
-        // Check Lady category first
-        for (const [name, variants] of Object.entries(specialUserCategories.lady)) {
-          if (variants.some(variant => fetchedDisplayName.includes(variant))) {
-            mentionedUserTitle = 'Lady';
-            mentionedSpecificName = name;
-            console.log(`Direct match found for Lady ${name} by display name: ${fetchedDisplayName}`);
-            directMatchFound = true;
-            break;
-          }
-        }
-        
-        // Then check Mistress category
-        if (!directMatchFound) {
-          for (const [name, variants] of Object.entries(specialUserCategories.mistress)) {
-            if (variants.some(variant => fetchedDisplayName.includes(variant))) {
+          
+          // Collect all possible name variants for this user
+          const username = user.username;
+          const displayName = member?.displayName || username;
+          const nickname = member?.nickname || '';
+          const globalName = user.globalName || '';
+          
+          // Log all the name variants for debugging
+          console.log(`Mentioned user details:`);
+          console.log(`- Username: ${username}`);
+          console.log(`- Display name: ${displayName}`);
+          console.log(`- Nickname: ${nickname}`);
+          console.log(`- Global name: ${globalName}`);
+          console.log(`- User ID: ${user.id}`);
+          
+          // Create an array of all name variants to check against
+          const checkNames = [username, displayName, nickname, globalName].filter(Boolean);
+          
+          // Check if any of the name variants match any special user variants
+          let specialUserFound = false;
+          
+          // Helper function to check if a name matches any variant in a category
+          const matchesAnyVariant = (name, category) => {
+            for (const [specialName, variants] of Object.entries(category)) {
+              // Check if any variant is contained within the name
+              if (variants.some(variant => {
+                // Try direct substring match first
+                if (name.includes(variant)) {
+                  console.log(`Direct match found: '${name}' contains '${variant}' (${specialName})`);
+                  return true;
+                }
+                
+                // Try normalized match (remove special characters)
+                const normalizedName = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                const normalizedVariant = variant.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                
+                if (normalizedName.includes(normalizedVariant)) {
+                  console.log(`Normalized match found: '${normalizedName}' contains '${normalizedVariant}' (${specialName})`);
+                  return true;
+                }
+                
+                return false;
+              })) {
+                return specialName;
+              }
+            }
+            return null;
+          };
+          
+          // Check each name variant against special users
+          for (const name of checkNames) {
+            // First check Lady category
+            const ladyMatch = matchesAnyVariant(name, specialUserCategories.lady);
+            if (ladyMatch) {
+              mentionedUserTitle = 'Lady';
+              mentionedSpecificName = ladyMatch;
+              console.log(`Found Lady ${ladyMatch} from name: ${name}`);
+              specialUserFound = true;
+              break;
+            }
+            
+            // Then check Mistress category
+            const mistressMatch = matchesAnyVariant(name, specialUserCategories.mistress);
+            if (mistressMatch) {
               mentionedUserTitle = 'Mistress';
-              mentionedSpecificName = name;
-              console.log(`Direct match found for Mistress ${name} by display name: ${fetchedDisplayName}`);
-              directMatchFound = true;
+              mentionedSpecificName = mistressMatch;
+              console.log(`Found Mistress ${mistressMatch} from name: ${name}`);
+              specialUserFound = true;
               break;
             }
           }
-        }
-        
-        // If direct match was found, skip the more complex matching
-        if (directMatchFound) {
-          return;
-        }
-        
-        // Function for more complex matching as a fallback
-        const checkSpecialUserMatch = (category, title) => {
-          for (const [name, variants] of Object.entries(category)) {
-            // Check all name variants against all special user variants
-            for (const checkName of checkNames) {
-              // 1. Exact match check
-              if (variants.includes(checkName)) {
-                mentionedUserTitle = title;
-                mentionedSpecificName = name;
-                console.log(`Found exact match for ${name} in ${title} category`);
-                return true;
-              }
-              
-              // 2. Substring match check
-              for (const variant of variants) {
-                if (checkName.includes(variant) || variant.includes(checkName)) {
-                  console.log(`Found substring match: '${checkName}' matches with '${variant}' for ${name}`);
-                  mentionedUserTitle = title;
-                  mentionedSpecificName = name;
-                  return true;
-                }
-              }
-              
-              // 3. Normalized match check (remove special characters)
-              for (const variant of variants) {
-                const normalizedCheckName = checkName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                const normalizedVariant = variant.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                
-                if (normalizedCheckName.includes(normalizedVariant) || normalizedVariant.includes(normalizedCheckName)) {
-                  console.log(`Found normalized match: '${normalizedCheckName}' matches with '${normalizedVariant}' for ${name}`);
-                  mentionedUserTitle = title;
-                  mentionedSpecificName = name;
-                  return true;
-                }
-              }
-            }
+          
+          if (specialUserFound) {
+            console.log(`Successfully identified mentioned user as ${mentionedUserTitle} ${mentionedSpecificName}`);
+          } else {
+            console.log(`Mentioned user is not a special user: ${displayName}`);
           }
-          return false;
-        };
-        
-        // Check Lady category first
-        if (!checkSpecialUserMatch(specialUserCategories.lady, 'Lady')) {
-          // Then check Mistress category
-          checkSpecialUserMatch(specialUserCategories.mistress, 'Mistress');
+        } catch (error) {
+          console.error(`Error processing mentioned user: ${error.message}`);
         }
         
         // Add to the mentioned users array
