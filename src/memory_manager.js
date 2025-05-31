@@ -8,12 +8,21 @@ class MemoryManager {
         this.conversationHistories = {};
         
         // Maximum number of messages to keep in memory per user
-        this.maxHistoryLength = 20;
+        this.maxHistoryLength = 10; // Reduced from 20 to save memory
+        
+        // Maximum number of users to keep in memory at once
+        this.maxUserHistories = 25; // Limit to 25 users as requested
+        
+        // Track when histories were last accessed
+        this.lastAccessed = {};
         
         // Database setup
         const db_dir = process.env.DB_PATH || "./";
         this.db_file = path.join(db_dir, 'bot.db');
         this.initDatabase();
+        
+        // Set up periodic cleanup to free memory
+        setInterval(() => this.cleanupOldHistories(), 30 * 60 * 1000); // Run every 30 minutes
     }
 
     // Initialize the database and create tables if they don't exist
@@ -58,6 +67,9 @@ class MemoryManager {
         // Add the new message
         this.conversationHistories[key].push({ role, content });
         
+        // Update last accessed time
+        this.lastAccessed[key] = Date.now();
+        
         // Trim history to save tokens, but always keep the system message
         if (this.conversationHistories[key].length > this.maxHistoryLength) {
             this.conversationHistories[key] = [
@@ -71,16 +83,68 @@ class MemoryManager {
             this.storeMemory(userId, guildId, content);
         }
         
+        // Check if we need to clean up some histories to stay under memory limit
+        this.enforceUserLimit();
+        
         return this.conversationHistories[key];
     }
 
     // Get conversation history for a user
     getHistory(userId, guildId) {
         const key = `${guildId}-${userId}`;
+        
+        // Update last accessed time if history exists
+        if (this.conversationHistories[key]) {
+            this.lastAccessed[key] = Date.now();
+        }
+        
         return this.conversationHistories[key] || [
             // Default system message if no history exists
             { role: 'system', content: 'You are the Fairy Maid of the Scarlet Devil Mansion.' }
         ];
+    }
+
+    // Remove least recently used histories when we exceed the maximum number of users
+    enforceUserLimit() {
+        const historyKeys = Object.keys(this.conversationHistories);
+        
+        if (historyKeys.length <= this.maxUserHistories) {
+            return; // We're under the limit, no need to clean up
+        }
+        
+        // Sort keys by last accessed time (oldest first)
+        const sortedKeys = historyKeys.sort((a, b) => 
+            (this.lastAccessed[a] || 0) - (this.lastAccessed[b] || 0)
+        );
+        
+        // Remove oldest histories until we're under the limit
+        const keysToRemove = sortedKeys.slice(0, historyKeys.length - this.maxUserHistories);
+        
+        keysToRemove.forEach(key => {
+            delete this.conversationHistories[key];
+            delete this.lastAccessed[key];
+            console.log(`Removed conversation history for ${key} due to memory limits`);
+        });
+    }
+
+    // Periodically clean up old conversation histories to free memory
+    cleanupOldHistories() {
+        const now = Date.now();
+        const twoHoursAgo = now - (2 * 60 * 60 * 1000); // 2 hours in milliseconds
+        
+        let cleanupCount = 0;
+        
+        Object.keys(this.lastAccessed).forEach(key => {
+            if (this.lastAccessed[key] < twoHoursAgo) {
+                delete this.conversationHistories[key];
+                delete this.lastAccessed[key];
+                cleanupCount++;
+            }
+        });
+        
+        if (cleanupCount > 0) {
+            console.log(`Memory cleanup: removed ${cleanupCount} inactive conversation histories`);
+        }
     }
 
     // Store a memory in the database
