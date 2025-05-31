@@ -169,7 +169,7 @@ async function handleInteraction(interaction) {
     
     // Check permissions for sticky commands
     if (commandName === 'sticky' && !interaction.member.permissions.has("ManageChannels")) {
-        return interaction.reply({
+        return interaction.editReply({
             embeds: [{
                 title: "Insufficient Privileges!",
                 description: "You need the 'Manage Channels' permission.",
@@ -181,7 +181,7 @@ async function handleInteraction(interaction) {
     
     // Check permissions for boost commands
     if (commandName === 'boost' && !interaction.member.permissions.has("Administrator")) {
-        return interaction.reply({
+        return interaction.editReply({
             embeds: [{
                 title: "Insufficient Privileges!",
                 description: "You need the 'Administrator' permission to manage boost roles.",
@@ -334,19 +334,18 @@ async function handleInteraction(interaction) {
                     const roleIds = roleIdsStr.split(/\s+/);
                     
                     if (roleIds.length === 0) {
-                        return interaction.reply({
+                        return interaction.editReply({
                             embeds: [{
                                 title: "Missing Role IDs",
                                 description: "Please provide at least one role ID to set as a boost role.",
                                 color: Colors["error"]
-                            }],
-                            ephemeral: true
+                            }]
                         });
                     }
                     
                     global.boostManager.setBoostRoles(interaction.guild.id, roleIds);
                     
-                    interaction.reply({
+                    interaction.editReply({
                         embeds: [{
                             title: "Boost Roles Set",
                             description: `Successfully set ${roleIds.length} role(s) to be removed when users stop boosting.`,
@@ -360,7 +359,7 @@ async function handleInteraction(interaction) {
                     const configuredRoles = global.boostManager.getBoostRoles(interaction.guild.id);
                     
                     if (configuredRoles.length === 0) {
-                        return interaction.reply({
+                        return interaction.editReply({
                             embeds: [{
                                 title: "No Boost Roles",
                                 description: "No roles are currently configured to be removed when users stop boosting.",
@@ -375,7 +374,7 @@ async function handleInteraction(interaction) {
                         roleList += `• ${role ? role.name : "Unknown Role"} (${roleId})\n`;
                     });
                     
-                    interaction.reply({
+                    interaction.editReply({
                         embeds: [{
                             title: "Configured Boost Roles",
                             description: `The following roles will be removed when users stop boosting:\n\n${roleList}`,
@@ -388,7 +387,7 @@ async function handleInteraction(interaction) {
                 case 'clearroles': {
                     global.boostManager.removeBoostRoles(interaction.guild.id);
                     
-                    interaction.reply({
+                    interaction.editReply({
                         embeds: [{
                             title: "Boost Roles Cleared",
                             description: "Successfully cleared all roles from boost management.",
