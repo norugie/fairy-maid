@@ -50,7 +50,7 @@ client.on(Events.ClientReady, () => {
         status: "online"
     });
 
-    console.log(`Logged in as ${client.user.tag}! Status set to "Playing dusting the mansion"`);
+    console.log(`Logged in as ${client.user.tag}! Status set to "Watching the Mansion; plotting mischief! 🌟"`);
     
     // Register slash commands
     registerCommands(client);

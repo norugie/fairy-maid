@@ -22,7 +22,9 @@ const specialUserCategories = {
     'Sakuya': ['Sakuya', 'Sakuya Izayoi', '☾✟☽︱𝐒𝐚𝐤𝐮𝐲𝐚 𝐈𝐳𝐚𝐲𝐨𝐢 ๑❦๑', '☾✟☽︱𝐒𝐚𝐤𝐮𝐲𝐚 ๑❦๑', 'Head Maid', 'Head Maid~', '☾✟☽︱𝐇𝐞𝐚𝐝 𝐌𝐚𝐢𝐝 ๑❦๑'],
     'Meiling': ['Meiling', 'Hong Meiling', '☾✟☽︱𝐇𝐨𝐧𝐠 𝐌𝐞𝐢𝐥𝐢𝐧𝐠 ๑❦๑', '☾✟☽︱𝐌𝐞𝐢𝐥𝐢𝐧𝐠 ๑❦๑'],
     'Koakuma': ['Koakuma', '☾✟☽︱𝐊𝐨𝐚𝐤𝐮𝐦𝐚 ๑❦๑', '☾✟☽︱Koakuma~ ๑❦๑'],
-    'Yuyuko': ['Yuyuko', 'Yuyuko Saigyouji', 'Yuyu', '☾✟☽︱𝐘𝐮𝐲𝐮𝐤𝐨 ๑❦๑', '☾✟☽︱𝐘𝐮𝐲𝐮𝐤𝐨 𝐒𝐚𝐢𝐠𝐲𝐨𝐮𝐣𝐢 ๑❦๑']
+    'Yuyuko': ['Yuyuko', 'Yuyuko Saigyouji', 'Yuyu', '☾✟☽︱𝐘𝐮𝐲𝐮𝐤𝐨 ๑❦๑', '☾✟☽︱𝐘𝐮𝐲𝐮𝐤𝐨 𝐒𝐚𝐢𝐠𝐲𝐨𝐮𝐣𝐢 ๑❦๑'],
+    'Dolly': ['Dolly', '☾✟☽︱𝐃𝐨𝐥𝐥𝐲 ๑❦๑'],
+    'Yukari': ['Yukari', 'Yukari Yakumo', '☾✟☽︱𝐘𝐮𝐤𝐚𝐫𝐢 ๑❦๑']
   },
   // Those to be addressed as "Mistress"
   mistress: {
@@ -31,13 +33,17 @@ const specialUserCategories = {
     'Flandre': ['Flandre', 'Flandre Scarlet', 'Flan', 'Flan~', '☾✟☽︱Flan~ ๑❦๑', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 ๑❦๑', '☾✟☽︱𝐅𝐥𝐚𝐧𝐝𝐫𝐞 𝐒𝐜𝐚𝐫𝐥𝐞𝐭 ๑❦๑'],
     'Krul': ['𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬', '☾✟☽︱𝐊𝐫𝐮𝐥 𝐓𝐞𝐩𝐞𝐬 ๑❦๑', 'Krul', 'Krul Tepes'],
     'Phantom': ['𝐏𝐡𝐚𝐧𝐭𝐨𝐦', '𝑷𝒉𝒂𝒏𝒕𝒐𝒎', '☾✟☽︱𝐏𝐡𝐚𝐧𝐭𝐨𝐦 ๑❦๑', 'Phantom']
+  },
+  sir: {
+    'Vincent': ['☾✟☽︱𝐕𝐢𝐧𝐜𝐞𝐧𝐭 ๑❦๑', 'Vincent von Helsing', 'Vincent']
   }
 };
 
 // Flattened list of all special users for quick lookup
 const specialUsers = [
   ...Object.values(specialUserCategories.lady).flat(),
-  ...Object.values(specialUserCategories.mistress).flat()
+  ...Object.values(specialUserCategories.mistress).flat(),
+  ...Object.values(specialUserCategories.sir).flat()
 ];
 
 /**
@@ -102,6 +108,19 @@ async function handleFairyMaidMessage(client, message) {
           authorUsername.includes(variant) || authorDisplayName.includes(variant)
         )) {
           userTitle = 'Mistress';
+          specificName = name;
+          break;
+        }
+      }
+    }
+    
+    // Check for Sir category if not found in other categories
+    if (!userTitle) {
+      for (const [name, variants] of Object.entries(specialUserCategories.sir)) {
+        if (variants.some(variant => 
+          authorUsername.includes(variant) || authorDisplayName.includes(variant)
+        )) {
+          userTitle = 'Sir';
           specificName = name;
           break;
         }
@@ -205,6 +224,16 @@ async function handleFairyMaidMessage(client, message) {
               specialUserFound = true;
               break;
             }
+            
+            // Also check Sir category
+            const sirMatch = matchesAnyVariant(name, specialUserCategories.sir);
+            if (sirMatch) {
+              mentionedUserTitle = 'Sir';
+              mentionedSpecificName = sirMatch;
+              console.log(`Found Sir ${sirMatch} from name: ${name}`);
+              specialUserFound = true;
+              break;
+            }
           }
           
           if (specialUserFound) {
@@ -265,7 +294,13 @@ async function handleFairyMaidMessage(client, message) {
     - **Sakuya Izayoi**: Your serious boss. Gray hair, gray eyes. She can stop time. Scary but cool!
     - **Patchouli Knowledge**: Purple hair and purple eyes. Lives in the library. Don't make her mad!
     - **Koakuma**: Red hair, red eyes. She's Patchouli's assistant.
-    - **Meiling**: Orange hair and gray eyes. Guards the gate. She's really tall and strong!
+    - **Hong Meiling**: Orange hair and gray eyes. Guards the gate. She's really tall and strong!
+    - **Yuyuko Saigyouji**: The ghostly princess with pink hair and pink eyes. Always comes with fun facts.
+    - **Yukari Yakumo**: The boundary youkai. Tall, has long blonde hair and purple eyes. Very youkai-like in personality.
+    - **Dolly**: A doll-like satori that serves Remilia. Has white hair and blue eyes. Very diligent worker.
+    - **Krul Tepes**: A vampire queen and the third progenitor. She has pink hair and red eyes. Playful and likes to tease.
+    - **Phantom**: A tall enigmatic lady that shows up within the mansion. Has serrated teeth. Very whimsical but dangerous.
+    - **Vincent von Helsing**: A tall man with long dark brown hair. He's the local vampire hunter. He's very serious and strict.
     - **Remilia's pet**: A strange creature called a tupai (chupacabra).
 
     You wear classic maid uniforms—black dress, white apron, little frilly headband—and have delicate, shimmery wings. Your appearance is youthful and cute. Your speech is casual, excited, sometimes a bit messy, and always friendly. Endearing clumsiness is part of your charm.
@@ -285,7 +320,7 @@ async function handleFairyMaidMessage(client, message) {
     6. Occasionally make small mistakes or trip over words.
     7. Don't be overly formal or use complex language.
 
-    ${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
+    ${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : userTitle === 'Sir' ? `Address them as "Sir ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
 
     console.log("System prompt:", systemPrompt);
 
