@@ -257,6 +257,15 @@ async function handleFairyMaidMessage(client, message) {
           title: mentionedUserTitle,
           specificName: mentionedSpecificName
         });
+        
+        // Store special users in the memory system for future reference
+        if (mentionedUserTitle !== '') {
+          global.memoryManager.storeMentionedUser(message.author.id, message.guild.id, {
+            id: user.id,
+            title: mentionedUserTitle,
+            specificName: mentionedSpecificName
+          });
+        }
       }
     });
     

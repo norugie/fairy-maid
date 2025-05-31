@@ -45,9 +45,27 @@ class MemoryManager {
             `, (error) => {
                 if (error) {
                     console.error(`Error creating memories table: ${error.message}`);
-                } else {
-                    console.log('Memory database initialized successfully');
+                    return;
                 }
+                
+                // Create mentioned_users table if it doesn't exist
+                this.db.run(`
+                    CREATE TABLE IF NOT EXISTS mentioned_users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id TEXT NOT NULL,
+                        guild_id TEXT NOT NULL,
+                        mentioned_user_id TEXT NOT NULL,
+                        title TEXT NOT NULL,
+                        specific_name TEXT NOT NULL,
+                        timestamp INTEGER NOT NULL
+                    )
+                `, (error) => {
+                    if (error) {
+                        console.error(`Error creating mentioned_users table: ${error.message}`);
+                    } else {
+                        console.log('Memory database initialized successfully');
+                    }
+                });
             });
         });
     }
@@ -192,21 +210,78 @@ class MemoryManager {
         });
     }
 
+    // Store a mentioned special user in the database
+    storeMentionedUser(userId, guildId, mentionedUser) {
+        if (!this.db) {
+            console.error('Database not initialized');
+            return;
+        }
+        
+        const timestamp = Date.now();
+        
+        this.db.run(
+            'INSERT INTO mentioned_users (user_id, guild_id, mentioned_user_id, title, specific_name, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+            [userId, guildId, mentionedUser.id, mentionedUser.title, mentionedUser.specificName, timestamp],
+            function(error) {
+                if (error) {
+                    console.error(`Error storing mentioned user: ${error.message}`);
+                } else {
+                    console.log(`Mentioned user ${mentionedUser.specificName} stored for user ${userId} with ID ${this.lastID}`);
+                }
+            }
+        );
+    }
+
+    // Retrieve mentioned users for a user
+    getMentionedUsers(userId, guildId, limit = 5) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+            
+            this.db.all(
+                'SELECT mentioned_user_id, title, specific_name, timestamp FROM mentioned_users WHERE user_id = ? AND guild_id = ? ORDER BY timestamp DESC LIMIT ?',
+                [userId, guildId, limit],
+                (error, rows) => {
+                    if (error) {
+                        console.error(`Error retrieving mentioned users: ${error.message}`);
+                        reject(error);
+                    } else {
+                        resolve(rows);
+                    }
+                }
+            );
+        });
+    }
+
     // Generate a memory summary for a user
     async getMemorySummary(userId, guildId) {
         try {
             const memories = await this.getMemories(userId, guildId);
+            const mentionedUsers = await this.getMentionedUsers(userId, guildId);
             
-            if (memories.length === 0) {
+            if (memories.length === 0 && mentionedUsers.length === 0) {
                 return null; // No memories to summarize
             }
             
             // Format memories into a readable summary
             let summary = "I remember:";
+            
+            // Add regular memories
             memories.forEach(memory => {
                 const date = new Date(memory.timestamp);
                 summary += `\n• ${memory.content} (${date.toLocaleDateString()})`;
             });
+            
+            // Add mentioned users if any
+            if (mentionedUsers.length > 0) {
+                summary += "\n\nSpecial users you've previously mentioned:";
+                mentionedUsers.forEach(user => {
+                    const date = new Date(user.timestamp);
+                    summary += `\n• ${user.title} ${user.specific_name} (${date.toLocaleDateString()})`;
+                });
+            }
             
             return summary;
         } catch (error) {
