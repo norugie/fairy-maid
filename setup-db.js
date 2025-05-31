@@ -1,8 +1,8 @@
 // Database setup script
 const fs = require('fs');
 const path = require('path');
-const findConfig = require("find-config");
-require("dotenv").config({ path: findConfig(".env") });
+// Load environment variables directly
+require("dotenv").config();
 
 // Get the database directory from environment or use default
 const db_dir = process.env.DB_PATH || "./data";

@@ -1,6 +1,6 @@
 const { REST, Routes } = require('discord.js');
-const findConfig = require("find-config");
-require("dotenv").config({ path: findConfig(".env") });
+// Load environment variables directly
+require("dotenv").config();
 const { registerCommands } = require('./src/slash_commands.js');
 
 // Create a REST instance

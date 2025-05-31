@@ -1,5 +1,5 @@
-const findConfig = require("find-config");
-require("dotenv").config({ path: findConfig(".env") });
+// Load environment variables directly
+require("dotenv").config();
 
 const BotFunctions = require("./bot_functions.js");
 const Colors = require("./messages/colors.js");
