@@ -3,7 +3,7 @@ const BotFunctions = require("../bot_functions.js");
 const Errors = require("../messages/errors.js");
 const Colors = require("../messages/colors.js");
 
-function Run(client, msg)
+function Run(client, msg, interaction = null, isDeferred = false)
 {
     const msgParams = BotFunctions.GetCommandParamaters(msg.content);
     const server_id = msg.guild.id;

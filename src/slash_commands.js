@@ -154,8 +154,16 @@ async function registerCommands(client) {
 async function handleInteraction(interaction) {
     if (!interaction.isChatInputCommand()) return;
     
-    // Acknowledge the interaction immediately to prevent timeout
-    await interaction.deferReply();
+    // Always defer the reply immediately to prevent timeouts
+    // But first check if it's already been deferred or replied to
+    try {
+        if (!interaction.deferred && !interaction.replied) {
+            await interaction.deferReply();
+        }
+    } catch (error) {
+        console.error("Error deferring interaction:", error);
+        // Continue anyway, as the interaction might already be acknowledged
+    }
     
     const { commandName, options } = interaction;
     
@@ -206,8 +214,8 @@ async function handleInteraction(interaction) {
                         mockMsg.attachments.set('0', { url: mediaUrl });
                     }
                     
-                    // Use existing command handler with our mock message
-                    AddCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler with our mock message and flag that interaction is already deferred
+                    AddCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
                 
@@ -221,8 +229,8 @@ async function handleInteraction(interaction) {
                         guild: interaction.guild
                     };
                     
-                    // Use existing command handler
-                    AddFancyCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler and flag that interaction is already deferred
+                    AddFancyCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
                 
@@ -238,8 +246,8 @@ async function handleInteraction(interaction) {
                         guild: interaction.guild
                     };
                     
-                    // Use existing command handler
-                    EditCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler and flag that interaction is already deferred
+                    EditCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
                 
@@ -254,8 +262,8 @@ async function handleInteraction(interaction) {
                         guild: interaction.guild
                     };
                     
-                    // Use existing command handler
-                    RemoveCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler and flag that interaction is already deferred
+                    RemoveCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
                 
@@ -269,8 +277,8 @@ async function handleInteraction(interaction) {
                         guild: interaction.guild
                     };
                     
-                    // Use existing command handler
-                    RemoveAllCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler and flag that interaction is already deferred
+                    RemoveAllCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
                 
@@ -284,8 +292,8 @@ async function handleInteraction(interaction) {
                         guild: interaction.guild
                     };
                     
-                    // Use existing command handler
-                    PreviewCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler and flag that interaction is already deferred
+                    PreviewCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
                 
@@ -297,8 +305,8 @@ async function handleInteraction(interaction) {
                         guild: interaction.guild
                     };
                     
-                    // Use existing command handler
-                    PreviewFancyCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler and flag that interaction is already deferred
+                    PreviewFancyCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
                 
@@ -312,8 +320,8 @@ async function handleInteraction(interaction) {
                         guild: interaction.guild
                     };
                     
-                    // Use existing command handler
-                    ListCommand.Run(interaction.client, mockMsg, interaction);
+                    // Use existing command handler and flag that interaction is already deferred
+                    ListCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
             }

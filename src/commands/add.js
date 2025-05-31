@@ -5,7 +5,7 @@ const Colors = require("../messages/colors.js");
 
 const { ChannelType } = require("discord.js");
 
-function Run(client, msg, interaction = null) {
+function Run(client, msg, interaction = null, isDeferred = false) {
     let server_id, channel_id, originalMsg, mediaUrl = null;
     
     // Handle both traditional commands and slash commands

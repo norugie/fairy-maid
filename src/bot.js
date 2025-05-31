@@ -19,7 +19,7 @@ const { handleFairyMaidMessage } = require("./fairy_maid.js");
 const { Client, GatewayIntentBits, EmbedBuilder, ActivityType, Events } = require("discord.js");
 
 // Import slash command handlers
-const { registerCommands, handleInteraction } = require("./slash_commands_fixed.js");
+const { registerCommands, handleInteraction } = require("./slash_commands.js");
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,

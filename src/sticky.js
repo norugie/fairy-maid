@@ -1,12 +1,17 @@
 const sql = require("sqlite3").verbose();
+const path = require('path');
+
+// Make sure the database path is properly formatted for the OS
 const db_dir = process.env.DB_PATH || "./";
+const db_file = path.join(db_dir, 'bot.db');
+console.log(`Using database file: ${db_file}`);
 
 // Keep trying until we can open the database, this bot won't work without it
 let db = null;
 let dbOpened = false;
 (function OpenDB()
 {
-    db = new sql.Database(`${db_dir}/bot.db`, (error) => {
+    db = new sql.Database(db_file, (error) => {
         if (error != null)
         {   
             setTimeout(OpenDB, 2000);
