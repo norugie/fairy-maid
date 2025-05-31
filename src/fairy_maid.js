@@ -214,6 +214,11 @@ async function handleFairyMaidMessage(client, message) {
           }
         } catch (error) {
           console.error(`Error processing mentioned user: ${error.message}`);
+          mentionedUsersInfo = 'The following users were mentioned/tagged in this message. You MUST acknowledge them by their proper titles:\n';
+          // For special users:
+          mentionedUsersInfo += `- ${user.title} ${user.specificName} (username: ${user.username}): You MUST address them as "${user.title} ${user.specificName}" and acknowledge their presence and role in the mansion\n`;
+          // For guests:
+          mentionedUsersInfo += `- Guest ${user.username}: You MUST address them as "guest" and acknowledge their presence as a guest\n`;
         }
         
         // Add to the mentioned users array
@@ -272,7 +277,7 @@ IMPORTANT RULES FOR YOUR RESPONSES:
 6. Occasionally make small mistakes or trip over words.
 7. Don't be overly formal or use complex language.
 
-${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}\n\n${mentionedUsersInfo.length > 0 ? `IMPORTANT: ${mentionedUsersInfo}` : ''}`;
+${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}\n\n${mentionedUsersInfo.length > 0 ? `CRITICAL INSTRUCTION - MENTIONED USERS: ${mentionedUsersInfo}\nYou MUST acknowledge and recognize these mentioned users in your response. If someone asks about a mentioned user, you MUST show that you know who they are.` : ''}`;
 
     // Get user's conversation history
     const userId = message.author.id;
