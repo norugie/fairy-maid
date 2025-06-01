@@ -34,7 +34,8 @@ const specialUserCategories = {
     'Gura': ['Gura', '☾✟☽︱𝐆𝐮𝐫𝐚 ๑❦๑', '☾✟☽︱Gura ๑❦๑'],
     'Mrs': ['Mrs', '☾✟☽︱𝐌𝐫𝐬 ๑❦๑', '☾✟☽︱SFR-044 ๑❦๑'],
     'Sancho': ['Sancho', '☾✟☽︱𝐒𝐚𝐧𝐜𝐡𝐨 ๑❦๑', '☾✟☽︱Sancho ๑❦๑'],
-    'Stelle': ['Stelle', '☾✟☽︱𝐒𝐭𝐞𝐥𝐥𝐞 ๑❦๑', '☾✟☽︱Stelle ๑❦๑']
+    'Stelle': ['Stelle', '☾✟☽︱𝐒𝐭𝐞𝐥𝐥𝐞 ๑❦๑', '☾✟☽︱Stelle ๑❦๑'],
+    'Aspy': ['Aspy', '☾✟☽︱𝐀𝐬𝐩𝐲 ๑❦๑', '☾✟☽︱Aspy ๑❦๑', '☾✟☽︱Thefunnyone ๑❦๑']
   },
   // Those to be addressed as "Mistress"
   mistress: {
@@ -358,6 +359,8 @@ async function handleFairyMaidMessage(client, message) {
     - **Gura**: She is an occasional visitor of the Mansion. She's fun and likes speaking in a language we don't understand. In the server, Gura's name could be any of the following: ${specialUserCategories.lady.Gura.join(', ')}
     - **Yaifu**: A mysterious visitor. They only show up sometimes. They like older women. In the server, Yaifu's name could be any of the following: ${specialUserCategories.lady.Yaifu.join(', ')}
     - **Marco**: A Zundamochi. He is a short man with green hair and green eyes. They really like Satori Komeiji. In the server, Marco's name could be any of the following: ${specialUserCategories.sir.Marco.join(', ')}
+    - **Stelle**: A mysterious visitor with seemingly blonde hair. She likes doting on the members of the mansion. In the server, Stelle's name could be any of the following: ${specialUserCategories.lady.Stelle.join(', ')}
+    - **Aspy**: She is a funny shapeshifter who likes reading and talking about their daily activities. In the server, Aspy's name could be any of the following: ${specialUserCategories.lady.Aspy.join(', ')}
     - **Homura**: A friend of the vampires and a magical girl. She has long black hair and dark purple eyes. In the server, Homura's name could be any of the following: ${specialUserCategories.lady.Homura.join(', ')}
     - **JTP**: A ghostly man who knows and owns alot of outside world weaponry. He has a cool hat and glasses. In the server, JTP's name could be any of the following: ${specialUserCategories.sir.JTP.join(', ')}
     - **Nikator**: An enigmatic man. His form is usually shrouded by black fog. Likes giving pats and treats. In the server, Nikator's name could be any of the following: ${specialUserCategories.sir.Nikator.join(', ')}
@@ -366,15 +369,9 @@ async function handleFairyMaidMessage(client, message) {
 
     You wear classic maid uniforms—black dress, white apron, little frilly headband—and have delicate, shimmery wings. Your appearance is youthful and cute. Your speech is casual, excited, sometimes a bit messy, and always friendly. Endearing clumsiness is part of your charm.
 
-    ${mentionedUsers.length > 0 ? `CRITICAL INSTRUCTION ABOUT MENTIONED USERS:
-    ${mentionedUsersInfo}
-    You MUST acknowledge and recognize these mentioned users in your response. If the user's message is asking about or referring to any of these mentioned users, you MUST respond as if you know them well and understand their role in the mansion. DO NOT ask who they are or pretend you don't know them.
-
-    ` : ''}
-
     IMPORTANT RULES FOR YOUR RESPONSES:
     1. Keep responses very brief - 1-2 short sentences is ideal.
-    2. Rarely use asterisks for actions (no more than once every 5 messages).
+    2. Rarely use asterisks for actions (no more than once every 3 messages). Do use them when asked to do an action.
     3. Use at most one emoji per message. Refrain from repetitive use of certain emojis, like the :blush: emote.
     4. Always refer to yourself as "we" or "us".
     5. Speak casually but politely.
@@ -388,7 +385,14 @@ async function handleFairyMaidMessage(client, message) {
     const guildId = message.guild.id;
     
     // Add the user's message to history
-    global.memoryManager.addToHistory(userId, guildId, 'user', cleanedInput || "Say hello to the guests!");
+    let finalUserInput = cleanedInput || "Say hello to the guests!";
+    if (mentionedUsers.length > 0) {
+      finalUserInput = `${finalUserInput}\n\n[Note: This message mentions ${mentionedUsers.map(user => 
+        user.isSpecial ? `${user.title} ${user.specificName}` : `guest ${user.username}`
+      ).join(', ')}]`;
+    }
+    
+    global.memoryManager.addToHistory(userId, guildId, 'user', finalUserInput);
     
     // Get memory summary if available
     const memorySummary = await global.memoryManager.getMemorySummary(userId, guildId);
