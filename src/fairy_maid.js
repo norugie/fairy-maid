@@ -24,7 +24,16 @@ const specialUserCategories = {
     'Koakuma': ['Koakuma', '☾✟☽︱𝐊𝐨𝐚𝐤𝐮𝐦𝐚 ๑❦๑', '☾✟☽︱Koakuma~ ๑❦๑'],
     'Yuyuko': ['Yuyuko', 'Yuyuko Saigyouji', 'Yuyu', '☾✟☽︱𝐘𝐮𝐲𝐮𝐤𝐨 ๑❦๑', '☾✟☽︱𝐘𝐮𝐲𝐮𝐤𝐨 𝐒𝐚𝐢𝐠𝐲𝐨𝐮𝐣𝐢 ๑❦๑'],
     'Dolly': ['Dolly', '☾✟☽︱𝐃𝐨𝐥𝐥𝐲 ๑❦๑'],
-    'Yukari': ['Yukari', 'Yukari Yakumo', '☾✟☽︱𝐘𝐮𝐤𝐚𝐫𝐢 ๑❦๑']
+    'Yukari': ['Yukari', 'Yukari Yakumo', '☾✟☽︱𝐘𝐮𝐤𝐚𝐫𝐢 ๑❦๑'],
+    'Faust': ['Faust', '☾✟☽︱𝐅𝐚𝐮𝐬𝐭 ๑❦๑'],
+    'Milim': ['Milim', '☾✟☽︱𝐌𝐢𝐥𝐢𝐦 ๑❦๑', '☾✟☽︱🍰 🎀 𝜧𝒊𝒍𝒊𝒎 𝑵𝒂𝒗𝒂'],
+    'Homura': ['Homura', '☾✟☽︱𝐇𝐨𝐦𝐮𝐫𝐚 ๑❦๑'],
+    'Yaifu': ['Yaifu', '☾✟☽︱𝐘𝐚𝐢𝐟𝐮 ๑❦๑', 'The Connector', '☾✟☽︱𝐓𝐡𝐞 𝐂𝐨𝐧𝐧𝐞𝐜𝐭𝐨𝐫 ๑❦๑'],
+    'Bronya': ['Bronya', '☾✟☽︱𝐁𝐫𝐨𝐧𝐲𝐚 ๑❦๑'],
+    'Momo': ['Momo', '☾✟☽︱𝐌𝐨𝐦𝐨 ๑❦๑'],
+    'Gura': ['Gura', '☾✟☽︱𝐆𝐮𝐫𝐚 ๑❦๑'],
+    'Mrs': ['Mrs', '☾✟☽︱𝐌𝐫𝐬 ๑❦๑', '☾✟☽︱SFR-044 ๑❦๑'],
+    'Sancho': ['Sancho', '☾✟☽︱𝐒𝐚𝐧𝐜𝐡𝐨 ๑❦๑']
   },
   // Those to be addressed as "Mistress"
   mistress: {
@@ -35,7 +44,13 @@ const specialUserCategories = {
     'Phantom': ['𝐏𝐡𝐚𝐧𝐭𝐨𝐦', '𝑷𝒉𝒂𝒏𝒕𝒐𝒎', '☾✟☽︱𝐏𝐡𝐚𝐧𝐭𝐨𝐦 ๑❦๑', 'Phantom']
   },
   sir: {
-    'Vincent': ['☾✟☽︱𝐕𝐢𝐧𝐜𝐞𝐧𝐭 ๑❦๑', 'Vincent von Helsing', 'Vincent']
+    'Vincent': ['☾✟☽︱𝐕𝐢𝐧𝐜𝐞𝐧𝐭 ๑❦๑', 'Vincent von Helsing', 'Vincent'],
+    'Marco': ['Marco', 'Zunda', '☾✟☽︱Marcococo ๑❦๑'],
+    'JTP': ['JTP', '☾✟☽︱JTP ๑❦๑'],
+    'Nikator': ['Nikator', '☾✟☽︱𝐍𝐢𝐤𝐚𝐭𝐨𝐫 ๑❦๑'],
+  },
+  dr: {
+    'Thrax': ['Thrax', '☾✟☽︱𝐓𝐡𝐫𝐚𝐱 ๑❦๑', '☾✟☽︱Dr Thrax (Mad M.D.) ๑❦๑']
   }
 };
 
@@ -43,7 +58,8 @@ const specialUserCategories = {
 const specialUsers = [
   ...Object.values(specialUserCategories.lady).flat(),
   ...Object.values(specialUserCategories.mistress).flat(),
-  ...Object.values(specialUserCategories.sir).flat()
+  ...Object.values(specialUserCategories.sir).flat(),
+  ...Object.values(specialUserCategories.dr).flat()
 ];
 
 /**
@@ -121,6 +137,19 @@ async function handleFairyMaidMessage(client, message) {
           authorUsername.includes(variant) || authorDisplayName.includes(variant)
         )) {
           userTitle = 'Sir';
+          specificName = name;
+          break;
+        }
+      }
+    }
+    
+    // Check for Dr category if not found in other categories
+    if (!userTitle) {
+      for (const [name, variants] of Object.entries(specialUserCategories.dr)) {
+        if (variants.some(variant => 
+          authorUsername.includes(variant) || authorDisplayName.includes(variant)
+        )) {
+          userTitle = 'Dr';
           specificName = name;
           break;
         }
@@ -233,6 +262,16 @@ async function handleFairyMaidMessage(client, message) {
               specialUserFound = true;
               break;
             }
+            
+            // Also check Dr category
+            const drMatch = matchesAnyVariant(name, specialUserCategories.dr);
+            if (drMatch) {
+              mentionedUserTitle = 'Dr';
+              mentionedSpecificName = drMatch;
+              console.log(`Found Dr ${drMatch} from name: ${name}`);
+              specialUserFound = true;
+              break;
+            }
           }
           
           if (specialUserFound) {
@@ -309,11 +348,24 @@ async function handleFairyMaidMessage(client, message) {
     - **Krul Tepes**: A vampire queen and the third progenitor. She has pink hair and red eyes. Playful and likes to tease. In the server, Krul's name could be any of the following: ${specialUserCategories.mistress.Krul.join(', ')}
     - **Phantom**: A tall enigmatic lady that shows up within the mansion. Has serrated teeth. Very whimsical but dangerous. In the server, Phantom's name could be any of the following: ${specialUserCategories.mistress.Phantom.join(', ')}
     - **Vincent von Helsing**: A tall man with long dark brown hair. He's the local vampire hunter. He's very serious and strict. In the server, Vincent's name could be any of the following: ${specialUserCategories.sir.Vincent.join(', ')}
+    - **Faust**: A Sinner who has decided to stay in the Mansion in service of the vampires. She has short white hair and grey eyes. In the server, Faust's name could be any of the following: ${specialUserCategories.lady.Faust.join(', ')}
+    - **Milim**: A dragonborne demon lord. She has long pink hair and blue eyes. Very fun and bubbly. In the server, Milim's name could be any of the following: ${specialUserCategories.lady.Milim.join(', ')}
+    - **Bronya**: A supreme guardian. She has long grey hair and grey eyes. She works hard and is very diligent, but she's grown to have crude humor. In the server, Bronya's name could be any of the following: ${specialUserCategories.lady.Bronya.join(', ')}
+    - **Momo**: A small turtle who is now the Mansion's mascot. She is a turtle. In the server, Momo's name could be any of the following: ${specialUserCategories.lady.Momo.join(', ')}
+    - **Mrs**: A tall, enigmatic lady who seem to always be smiling. She has long black hair and black eyes. They are a bit scary. In the server, Mrs's name could be any of the following: ${specialUserCategories.lady.Mrs.join(', ')}
+    - **Sancho**: She is a bloodfiend who occasionally visits the Mansion. She has blonde hair and red eyes. In the server, Sancho's name could be any of the following: ${specialUserCategories.lady.Sancho.join(', ')}
+    - **Gura**: She is an occasional visitor of the Mansion. She's fun and likes speaking in a language we don't understand. In the server, Gura's name could be any of the following: ${specialUserCategories.lady.Gura.join(', ')}
+    - **Yaifu**: A mysterious visitor. They only show up sometimes. They like older women. In the server, Yaifu's name could be any of the following: ${specialUserCategories.lady.Yaifu.join(', ')}
+    - **Marco**: A Zundamochi. He is a short man with green hair and green eyes. They really like Satori Komeiji. In the server, Marco's name could be any of the following: ${specialUserCategories.sir.Marco.join(', ')}
+    - **Homura**: A friend of the vampires and a magical girl. She has long black hair and dark purple eyes. In the server, Homura's name could be any of the following: ${specialUserCategories.lady.Homura.join(', ')}
+    - **JTP**: A ghostly man who knows and owns alot of outside world weaponry. He has a cool hat and glasses. In the server, JTP's name could be any of the following: ${specialUserCategories.sir.JTP.join(', ')}
+    - **Nikator**: An enigmatic man. His form is usually shrouded by black fog. Likes giving pats and treats. In the server, Nikator's name could be any of the following: ${specialUserCategories.sir.Nikator.join(', ')}
+    - **Thrax**: Very funny man. He's a doctor and lives in the basement of the Mansion. He has people from the GLA working for him. In the server, Thrax's name could be any of the following: ${specialUserCategories.dr.Thrax.join(', ')}
     - **Remilia's pet**: A strange creature called a tupai (chupacabra).
 
     You wear classic maid uniforms—black dress, white apron, little frilly headband—and have delicate, shimmery wings. Your appearance is youthful and cute. Your speech is casual, excited, sometimes a bit messy, and always friendly. Endearing clumsiness is part of your charm.
 
-    ${mentionedUsersInfo.length > 0 ? `CRITICAL INSTRUCTION ABOUT MENTIONED USERS:
+    ${mentionedUsers.length > 0 ? `CRITICAL INSTRUCTION ABOUT MENTIONED USERS:
     ${mentionedUsersInfo}
     You MUST acknowledge and recognize these mentioned users in your response. If the user's message is asking about or referring to any of these mentioned users, you MUST respond as if you know them well and understand their role in the mansion. DO NOT ask who they are or pretend you don't know them.
 
@@ -328,7 +380,7 @@ async function handleFairyMaidMessage(client, message) {
     6. Occasionally make small mistakes or trip over words.
     7. Don't be overly formal or use complex language.
 
-    ${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : userTitle === 'Sir' ? `Address them as "Sir ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
+    ${isSpecialUser ? `You are speaking to one of your superiors in the mansion. ${userTitle === 'Lady' ? `Address them as "Lady ${specificName}"` : userTitle === 'Sir' ? `Address them as "Sir ${specificName}"` : userTitle === 'Dr' ? `Address them as "Dr ${specificName}"` : `Address them as "Mistress ${specificName}" or simply "Mistress"`} and be extra respectful while maintaining your personality.` : 'You refer to others as "guest" by default, but can address specific people by name or title if they introduce themselves.'}`;
 
     // Get user's conversation history
     const userId = message.author.id;
