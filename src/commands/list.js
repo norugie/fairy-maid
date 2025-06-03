@@ -6,12 +6,15 @@ const Colors = require("../messages/colors.js");
 const { EmbedBuilder } = require("discord.js");
 
 function Run(client, msg, interaction = null, isDeferred = false) {
-    let server_id, channel_id;
+    let server_id, channel_id, subcommand;
     
     // Handle both traditional commands and slash commands
     if (interaction) {
         // This is a slash command interaction
         server_id = interaction.guild.id;
+        
+        // Get the subcommand (list or listall)
+        subcommand = interaction.options.getSubcommand();
         
         // Get channel from options (optional for list command)
         const channel = interaction.options.getChannel('channel');
@@ -21,6 +24,13 @@ function Run(client, msg, interaction = null, isDeferred = false) {
         server_id = msg.guild.id;
         const msgParams = BotFunctions.GetCommandParamaters(msg.content);
         channel_id = BotFunctions.GetMessageChannelID(msgParams[2]);
+        // Default to 'list' for traditional commands
+        subcommand = 'list';
+    }
+    
+    // Handle listall subcommand
+    if (interaction && subcommand === 'listall') {
+        return handleListAllStickies(client, interaction, server_id);
     }
 
     // They want to list all channel stickies 
@@ -195,6 +205,98 @@ function Run(client, msg, interaction = null, isDeferred = false) {
             }
         }
     }); 
+}
+
+// Function to handle the listall subcommand
+async function handleListAllStickies(client, interaction, server_id) {
+    // Get all stickies in the server using our new ListAllStickies method
+    const allStickies = global.stickies.ListAllStickies(server_id);
+    
+    if (typeof(allStickies) === "string") {
+        return interaction.editReply({
+            embeds: [{
+                title: "Error listing stickies",
+                description: allStickies,
+                color: Colors["error"]
+            }]
+        });
+    }
+    
+    if (!allStickies || allStickies.length === 0) {
+        return interaction.editReply({
+            embeds: [{
+                title: "No stickies found",
+                description: Errors["no_stickies"],
+                color: Colors["error"]
+            }]
+        });
+    }
+    
+    // Create an embed to display all stickies
+    const listEmbed = new EmbedBuilder()
+        .setColor(Colors["info"])
+        .setTitle(`All Stickies in ${interaction.guild.name}`);
+    
+    // Group stickies by channel for better organization
+    const stickyByChannel = {};
+    
+    // First, group all stickies by channel
+    for (const sticky of allStickies) {
+        if (!stickyByChannel[sticky.channel_id]) {
+            stickyByChannel[sticky.channel_id] = [];
+        }
+        stickyByChannel[sticky.channel_id].push(sticky);
+    }
+    
+    // Now add each channel's stickies to the embed
+    for (const [channelId, stickies] of Object.entries(stickyByChannel)) {
+        try {
+            // Fetch the channel to get its name
+            const channel = await client.channels.fetch(channelId);
+            const channelName = channel ? channel.name : 'Unknown Channel';
+            
+            // Create a field for each channel
+            let fieldValue = '';
+            
+            stickies.forEach(sticky => {
+                // Add sticky details to the field value
+                let stickyInfo = `**#${sticky.sticky_id}**: `;
+                
+                if (sticky.title) {
+                    stickyInfo += `*${sticky.title}* - `;
+                }
+                
+                // Truncate message if it's too long
+                const maxMessageLength = 50;
+                const message = sticky.message.length > maxMessageLength ? 
+                    `${sticky.message.substring(0, maxMessageLength)}...` : 
+                    sticky.message;
+                
+                stickyInfo += message + '\n';
+                
+                // Add to field value if there's room
+                if (fieldValue.length + stickyInfo.length < 1024) { // Discord field value limit
+                    fieldValue += stickyInfo;
+                }
+            });
+            
+            // Add the field to the embed
+            listEmbed.addFields({
+                name: `#${channelName} (${stickies.length} ${stickies.length === 1 ? 'sticky' : 'stickies'})`,
+                value: fieldValue || 'Error displaying stickies'
+            });
+        } catch (error) {
+            console.error(`Error fetching channel ${channelId}:`, error);
+        }
+    }
+    
+    // Add a footer with the total count
+    listEmbed.setFooter({ 
+        text: `Total: ${allStickies.length} ${allStickies.length === 1 ? 'sticky' : 'stickies'} across ${Object.keys(stickyByChannel).length} ${Object.keys(stickyByChannel).length === 1 ? 'channel' : 'channels'}`
+    });
+    
+    // Send the embed
+    return interaction.editReply({ embeds: [listEmbed] });
 }
 
 module.exports = {Run};

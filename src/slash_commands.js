@@ -6,6 +6,7 @@ const AddFancyCommand = require("./commands/addfancy.js");
 const EditCommand = require("./commands/edit.js");
 const RemoveCommand = require("./commands/remove.js");
 const RemoveAllCommand = require("./commands/removeall.js");
+const RemoveAllServerCommand = require("./commands/removeallserver.js");
 const PreviewCommand = require("./commands/preview.js");
 const PreviewFancyCommand = require("./commands/previewfancy.js");
 const ListCommand = require("./commands/list.js");
@@ -100,11 +101,21 @@ const commands = [
         .addSubcommand(subcommand =>
             subcommand
                 .setName('list')
-                .setDescription('List stickies in a channel or all channels with stickies')
+                .setDescription('List stickies in a channel')
                 .addChannelOption(option => 
                     option.setName('channel')
                         .setDescription('The channel to list stickies from (optional)')
                         .setRequired(false))
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('listall')
+                .setDescription('List all stickies in the server with their channels')
+        )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('removeallserver')
+                .setDescription('Remove all stickies from the entire server')
         ),
     
     // Boost commands
@@ -322,6 +333,32 @@ async function handleInteraction(interaction) {
                     
                     // Use existing command handler and flag that interaction is already deferred
                     ListCommand.Run(interaction.client, mockMsg, interaction, true);
+                    break;
+                }
+                
+                case 'listall': {
+                    // Create a mock message object for compatibility
+                    const mockMsg = {
+                        content: `!sticky listall`,
+                        channel: interaction.channel,
+                        guild: interaction.guild
+                    };
+                    
+                    // Use existing command handler and flag that interaction is already deferred
+                    ListCommand.Run(interaction.client, mockMsg, interaction, true);
+                    break;
+                }
+                
+                case 'removeallserver': {
+                    // Create a mock message object for compatibility
+                    const mockMsg = {
+                        content: `!sticky removeallserver`,
+                        channel: interaction.channel,
+                        guild: interaction.guild
+                    };
+                    
+                    // Use existing command handler and flag that interaction is already deferred
+                    RemoveAllServerCommand.Run(interaction.client, mockMsg, interaction, true);
                     break;
                 }
             }

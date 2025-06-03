@@ -273,6 +273,36 @@ class Stickies
             });
         }
     }
+    
+    RemoveAllServerStickies(server_id, cb)
+    {
+        if (db == null || !dbOpened)
+            return cb(DB_ERROR);
+            
+        if (this.stickies == null || this.stickies[server_id] == null)
+            return cb(false);
+            
+        // Count total stickies before deletion for reporting
+        const allStickies = this.ListAllStickies(server_id);
+        const totalCount = Array.isArray(allStickies) ? allStickies.length : 0;
+        
+        // Delete all stickies for this server
+        delete this.stickies[server_id];
+        
+        // Remove from database
+        db.run("DELETE FROM stickies WHERE server_id = ?", [server_id], (error) => {
+            if (error) {
+                console.error(error);
+                return cb(false, 0);
+            }
+            
+            // Initialize empty object for this server
+            this.InitStickies(server_id);
+            
+            // Return success with count of deleted stickies
+            return cb(true, totalCount);
+        });
+    }
 
     ValidStickyChannel(server_id, channel_id)
     {
@@ -309,6 +339,35 @@ class Stickies
         {
             return this.stickies[server_id][channel_id];
         }
+    }
+
+    ListAllStickies(server_id) // List all stickies in the server along with their assigned channels
+    {
+        if (db == null || !dbOpened)
+            return DB_ERROR;
+
+        if (this.stickies == null || this.stickies[server_id] == null)
+            return false;
+
+        let allStickies = [];
+        
+        // Iterate through all channels in the server
+        for (let [channel_id, stickiesArray] of Object.entries(this.stickies[server_id]))
+        {
+            // For each sticky in the channel, add it to the allStickies array with channel info
+            stickiesArray.forEach((sticky, index) => {
+                allStickies.push({
+                    channel_id: channel_id,
+                    sticky_id: index + 1, // Index is 0-based, sticky_id is 1-based
+                    title: sticky.title || null,
+                    message: sticky.message,
+                    is_embed: sticky.is_embed,
+                    hex_color: sticky.hex_color
+                });
+            });
+        }
+        
+        return allStickies;
     }
 
     set stickies(stickies)
