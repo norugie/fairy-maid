@@ -1,8 +1,40 @@
 const OpenAI = require('openai');
 
-// Initialize OpenAI client
+// Add fallback mechanism and better error handling for OpenAI API key
+let apiKey = process.env.OPENAI_API_KEY;
+
+// Check if API key is available
+if (!apiKey) {
+  console.error('WARNING: OPENAI_API_KEY environment variable is missing or empty.');
+  
+  // Try to load from .env file directly as a fallback
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const dotenv = require('dotenv');
+    
+    // Try to load from project root
+    const envPath = path.resolve(__dirname, '../.env');
+    if (fs.existsSync(envPath)) {
+      const envConfig = dotenv.parse(fs.readFileSync(envPath));
+      apiKey = envConfig.OPENAI_API_KEY;
+      console.log('Successfully loaded API key from .env file');
+    }
+  } catch (error) {
+    console.error('Error loading API key from .env file:', error.message);
+  }
+  
+  // If still no API key, exit with error
+  if (!apiKey) {
+    console.error('ERROR: Could not find OPENAI_API_KEY in environment variables or .env file.');
+    console.error('Please make sure you have set this variable in your .env file or in your environment.');
+    process.exit(1);
+  }
+}
+
+// Initialize OpenAI client with the API key
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: apiKey,
 });
 
 // Memory manager is initialized globally in bot.js
