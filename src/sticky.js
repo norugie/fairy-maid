@@ -1,4 +1,4 @@
-const sql = require("sqlite3").verbose();
+// const sql = require("sqlite3").verbose(); // STICKY FEATURE DISABLED
 const path = require('path');
 
 // Make sure the database path is properly formatted for the OS
@@ -381,4 +381,4 @@ class Stickies
     }
 }
 
-module.exports = { Stickies };
+// module.exports = { Stickies }; // STICKY FEATURE DISABLED

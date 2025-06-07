@@ -15,10 +15,10 @@ const Colors = require("./messages/colors.js");
 
 // Define slash commands
 const commands = [
-    // Sticky commands
+    // Sticky commands (DISABLED)
     new SlashCommandBuilder()
-        .setName('sticky')
-        .setDescription('Manage sticky messages')
+        // .setName('sticky')
+        // .setDescription('Manage sticky messages')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('add')
@@ -118,10 +118,10 @@ const commands = [
                 .setDescription('Remove all stickies from the entire server')
         ),
     
-    // Boost commands
+    // Boost commands (DISABLED)
     new SlashCommandBuilder()
-        .setName('boost')
-        .setDescription('Manage boost roles')
+        // .setName('boost')
+        // .setDescription('Manage boost roles')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('setroles')
